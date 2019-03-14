@@ -6,7 +6,7 @@ function F = fbenney(x,y,params,method)
     We = params(4);
     C = params(5);
     
-    L = x(end,:);
+    L = cellfun(@(x) x(end),x);
     e1 = zeros(1,1,2);
     e1(1,1,1) = 1;
     dy = feval(method,x,y,deg);

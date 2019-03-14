@@ -9,12 +9,16 @@ function out = diff_ps_2d(x, y, deg)
     fy(abs(fy)<suppression) = 0;
     
     out = zeros([size(y),length(deg)]);
-    N = size(fy,1)/2;
-    k = repmat([0:N-1, 0, 1-N:-1]',1,2) * 2*pi./x(end,:);
+    N = cellfun(@(x) length(x)/2,x);
+    L = cellfun(@(x) x(end),x);
+    k = cell(2,1);
+    for j = 1:length(x)
+        k{j} = repmat([0:N(j)-1, 0, 1-N(j):-1]',1,2) * 2*pi./L(j);
+    end
     
     for di = 1:length(deg)
         % Apply pseudo-spectral differentiation
         % Transform back into real space
-        out(:,:,di,:) = ifftn(((1i*k(:,1)).^deg(1,di)*(1i*k(:,2)').^deg(2,di)).*fy);
+        out(:,:,di,:) = ifftn(((1i*k{1}).^deg(1,di)*(1i*k{2}').^deg(2,di)).*fy);
     end
 end

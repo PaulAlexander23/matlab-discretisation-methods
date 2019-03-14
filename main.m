@@ -33,14 +33,18 @@ plot(x,f,x,fexact);
 
 %%
 
-n = 2^8;
-x = linspace(1/n,1,n)'*[1,2];
+n = [2^7,2^8];
+L = [1,2];
+x = cell(2,1);
+for ni = 1:length(n)
+    x{ni} = linspace(1/n(ni),1,n(ni))'*L(ni);
+end
 
 %y = cos(2*pi*x(:,1) + pi*x(:,2)');
 %fexact = -2*sin(2*pi*x(:,1) + pi*x(:,2)');
 
-y = cos(2*pi*x(:,1)) + sin(pi*x(:,2)');
-fexact = -sin(2*pi*x(:,1)) + cos(pi*x(:,2)');
+y = cos(2*pi*x{1}) + sin(pi*x{2}');
+fexact = -sin(2*pi*x{1}) + cos(pi*x{2}');
 
 problem = "fbenney";
 params = [1,1,1,1,1];
@@ -69,7 +73,7 @@ err = norm(fe,'inf');
 
 fprintf('Problem: %s, Method: %s, Error: %g, Time: %gs\n',problem,method,err,tc);
 
-[X,Y] = meshgrid(x(:,1),x(:,2));
+[X,Y] = meshgrid(x{2},x{1});
 surf(X,Y,real(f));
 shading interp;
 
