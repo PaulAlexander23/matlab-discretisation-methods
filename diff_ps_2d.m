@@ -15,6 +15,6 @@ function out = diff_ps_2d(x, y, deg)
     for di = 1:length(deg)
         % Apply pseudo-spectral differentiation
         % Transform back into real space
-        out(:,:,di) = ifftn(((1i*k(:,1)).^deg(di,1)*(1i*k(:,2)').^deg(di,2)).*fy);
+        out(:,:,di,:) = ifftn(((1i*k(:,1)).^deg(1,di)*(1i*k(:,2)').^deg(2,di)).*fy);
     end
 end

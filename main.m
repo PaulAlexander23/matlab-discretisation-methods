@@ -42,7 +42,10 @@ x = linspace(1/n,1,n)'*[1,2];
 y = cos(2*pi*x(:,1)) + sin(pi*x(:,2)');
 fexact = -sin(2*pi*x(:,1)) + cos(pi*x(:,2)');
 
-problem = "fTest2";
+problem = "fbenney";
+params = [1,1,1,1,1];
+
+%problem = "fTest2";
 
 method = "diff_ps_2d";
 
@@ -51,7 +54,7 @@ if method == "diff_fd"
 end
 
 tic
-f = feval(problem,x,y,method);
+f = feval(problem,x,y,params,method);
 tc = toc;
 
 if method == "diff_fd"
@@ -67,7 +70,7 @@ err = norm(fe,'inf');
 fprintf('Problem: %s, Method: %s, Error: %g, Time: %gs\n',problem,method,err,tc);
 
 [X,Y] = meshgrid(x(:,1),x(:,2));
-surf(X,Y,f);
+surf(X,Y,real(f));
 shading interp;
 
 function f = fTest(x,y,method)
