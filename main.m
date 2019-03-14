@@ -1,5 +1,5 @@
 
-n = 2^3;
+n = 2^5;
 x = linspace(1/n,1,n);
 
 y = cos(2*pi*x)';
@@ -10,12 +10,12 @@ problemDeg = [1,2];
 method = "diff_fd";
 
 if method == "diff_fd"
-    del_fd()
     init_fd(x, 2);
 end
 
 tic
-f = problem(x,y,feval(method,x,y,problemDeg));
+dy = feval(method,x,y,problemDeg);
+f = problem(x,y,dy);
 tc = toc;
 
 if method == "diff_fd"
