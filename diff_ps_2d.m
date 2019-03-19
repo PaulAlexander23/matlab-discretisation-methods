@@ -1,7 +1,7 @@
 function out = diff_ps_2d(x, y, deg)
     %DIFF_PSEUDO_SPECTRAL Uses the pseudo-spectral method to differentiate
     %   Detailed explanation goes here
-    suppression = 1e-13;
+    suppression = 1e-8;
     
      % Transform into fourier space
     fy = fft2(y);
@@ -10,10 +10,9 @@ function out = diff_ps_2d(x, y, deg)
     
     out = zeros([size(y),length(deg)]);
     N = cellfun(@(x) length(x)/2,x);
-    L = cellfun(@(x) x(end),x);
     k = cell(2,1);
     for j = 1:length(x)
-        k{j} = repmat([0:N(j)-1, 0, 1-N(j):-1]',1,2) * 2*pi./L(j);
+        k{j} = repmat([0:N(j)-1, 0, 1-N(j):-1]',1,2) * 2*pi./x{j}(end);
     end
     
     for di = 1:length(deg)

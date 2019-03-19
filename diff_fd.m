@@ -1,7 +1,7 @@
-function dy = diff_fd(x, y, degree)
-    global D
+function dy = diff_fd(x, y, D)
     
-    %init_fd(x, 2);
     
-    dy = cell2mat(arrayfun(@(d) D{d}*y,degree,'UniformOutput',false));
+    dy = cell2mat(arrayfun(@(D) D*y, D,'UniformOutput',false));
+    
+    
 end

@@ -46,19 +46,19 @@ end
 y = cos(2*pi*x{1}) + sin(pi*x{2}');
 fexact = -sin(2*pi*x{1}) + cos(pi*x{2}');
 
-problem = "fbenney";
+problem = "fTest2";
 params = [1,1,1,1,1];
 
 %problem = "fTest2";
 
-method = "diff_ps_2d";
+method = "diff_fd_2d";
 
-if method == "diff_fd"
-    init_fd(x, 2);
+if method == "diff_fd_2d"
+    init_fd_2d(x, 2);
 end
 
 tic
-f = feval(problem,x,y,params,method);
+f = feval(problem,x,y,method);
 tc = toc;
 
 if method == "diff_fd"
