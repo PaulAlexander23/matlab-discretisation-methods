@@ -1,34 +1,37 @@
-function init_fd(x, order)
-    nx = length(x);
-    dx = x(2)-x(1);
-    global D
+function D = init_fd2(x, degree, accuracy)
+    dim = size(degree,1);
+    if dim > 1
+        nx = cellfun(@(x) length(x),x);
+        dx = cellfun(@(x) x(2)-x(1),x);
+    else
+        nx = length(x);
+        dx = x(2)-x(1);
+    end
     
-    D = cell(1,4);
-    if (order == 2)
-        D{1} = spdiags(ones(nx,1)*[-1,1]/2,[-1,1],nx,nx)/dx;
-        D{1} = spdiags(ones(nx,1)*[-1,1]/2,[-1,1] + nx,nx,nx)/dx+D{1};
-        D{1} = spdiags(ones(nx,1)*[-1,1]/2,[-1,1] - nx,nx,nx)/dx+D{1};
-        D{2} = spdiags(ones(nx,1)*[1,-2,1],[-1,0,1],nx,nx)/dx/dx;
-        D{2} = spdiags(ones(nx,1)*[1,-2,1],[-1,0,1]+nx,nx,nx)/dx/dx+D{2};
-        D{2} = spdiags(ones(nx,1)*[1,-2,1],[-1,0,1]-nx,nx,nx)/dx/dx+D{2};
-        D{3} = spdiags(ones(nx,1)*[-1,2,0,-2,1]/2,[-2,-1,0,1,2],nx,nx)/dx/dx/dx;
-        D{3} = spdiags(ones(nx,1)*[-1,2,0,-2,1]/2,[-2,-1,0,1,2]+nx,nx,nx)/dx/dx/dx+D{3};
-        D{3} = spdiags(ones(nx,1)*[-1,2,0,-2,1]/2,[-2,-1,0,1,2]-nx,nx,nx)/dx/dx/dx+D{3};
-        D{4} = spdiags(ones(nx,1)*[1,-4,6,-4,1],[-2,-1,0,1,2],nx,nx)/dx/dx/dx/dx;
-        D{4} = spdiags(ones(nx,1)*[1,-4,6,-4,1],[-2,-1,0,1,2]+nx,nx,nx)/dx/dx/dx/dx+D{4};
-        D{4} = spdiags(ones(nx,1)*[1,-4,6,-4,1],[-2,-1,0,1,2]-nx,nx,nx)/dx/dx/dx/dx+D{4};
-    elseif (order == 4)
-        D{1} =      spdiags(ones(nx,1)*[1,-8,0,8,-1]/12,[-2,-1,0,1,2],nx,nx)/dx;
-        D{1} = D{1} + spdiags(ones(nx,1)*[1,-8,0,8,-1]/12,[-2,-1,0,1,2]+nx,nx,nx)/dx;
-        D{1} = D{1} + spdiags(ones(nx,1)*[1,-8,0,8,-1]/12,[-2,-1,0,1,2]-nx,nx,nx)/dx;
-        D{2} =      spdiags(ones(nx,1)*[-1,16,-30,16,-1]/12,[-2,-1,0,1,2],nx,nx)/dx/dx;
-        D{2} = D{2} + spdiags(ones(nx,1)*[-1,16,-30,16,-1]/12,[-2,-1,0,1,2]+nx,nx,nx)/dx/dx;
-        D{2} = D{2} + spdiags(ones(nx,1)*[-1,16,-30,16,-1]/12,[-2,-1,0,1,2]-nx,nx,nx)/dx/dx;
-        D{3} =      spdiags(ones(nx,1)*[1,-8,13,0,-13,8,-1]/8,[-3,-2,-1,0,1,2,3],nx,nx)/dx/dx/dx;
-        D{3} = D{3} + spdiags(ones(nx,1)*[1,-8,13,0,-13,8,-1]/8,[-3,-2,-1,0,1,2,3]+nx,nx,nx)/dx/dx/dx;
-        D{3} = D{3} + spdiags(ones(nx,1)*[1,-8,13,0,-13,8,-1]/8,[-3,-2,-1,0,1,2,3]-nx,nx,nx)/dx/dx/dx;
-        D{4} =      spdiags(ones(nx,1)*[-1,12,-39,56,-39,12,-1]/6,[-3,-2,-1,0,1,2,3],nx,nx)/dx/dx/dx/dx;
-        D{4} = D{4} + spdiags(ones(nx,1)*[-1,12,-39,56,-39,12,-1]/6,[-3,-2,-1,0,1,2,3]+nx,nx,nx)/dx/dx/dx/dx;
-        D{4} = D{4} + spdiags(ones(nx,1)*[-1,12,-39,56,-39,12,-1]/6,[-3,-2,-1,0,1,2,3]-nx,nx,nx)/dx/dx/dx/dx;
+    D = cell(1,size(degree,2));
+    for j = 1:size(degree,2)
+        D{j} = 1;
+        for k = 1:dim
+            [s,c] = centred_scheme(degree(k,j), accuracy);
+            
+            Dmat = construct_matrix(nx(k),dx(k),s,c,degree(k,j));
+            
+            D{j} = kron(Dmat,D{j});
+        end
+    end
+    
+    function [s,c] = centred_scheme(degree, accuracy)
+        sL = ceil(degree/2) + ceil(accuracy/2)-1;
+        s = -sL:sL;
+        ex = (0:2*sL)';
+        S = repmat(s,sL*2+1,1).^ex;
+        del = factorial(degree) * (ex == degree);
+        c = (S\del)';
+    end
+    
+    function mat = construct_matrix(nx,dx,s,c,d)
+        mat = spdiags(ones(nx,1)*c,s,nx,nx)*dx.^(-d);
+        mat = mat + spdiags(ones(nx,1)*c,s+nx,nx,nx)*dx.^(-d);
+        mat = mat + spdiags(ones(nx,1)*c,s-nx,nx,nx)*dx.^(-d);
     end
 end

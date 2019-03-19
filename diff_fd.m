@@ -1,7 +1,9 @@
-function dy = diff_fd(x, y, D)
+function DY = diff_fd2(x, Y, D)
+    shape = size(Y);
     
+    y = reshape(Y,numel(Y),1);
     
-    dy = cell2mat(arrayfun(@(D) D*y, D,'UniformOutput',false));
+    dy = cell2mat(cellfun(@(D) D*y, D, 'UniformOutput', false));
     
-    
+    DY = reshape(dy,[shape,length(D)]);
 end
