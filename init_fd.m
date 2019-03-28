@@ -1,4 +1,4 @@
-function D = init_fd2(x, degree, accuracy)
+function D = init_fd(x, degree, accuracy)
     dim = size(degree,1);
     if dim > 1
         nx = cellfun(@(x) length(x),x);
