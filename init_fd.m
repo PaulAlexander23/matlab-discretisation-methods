@@ -4,6 +4,7 @@ function D = init_fd(x, degree, accuracy)
         nx = cellfun(@(x) length(x),x);
         dx = cellfun(@(x) x(2)-x(1),x);
     else
+        x = x{1};
         nx = length(x);
         dx = x(2)-x(1);
     end
