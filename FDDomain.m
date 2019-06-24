@@ -11,7 +11,7 @@ classdef FDDomain < Domain
             
             obj.diffDegrees = diffDegrees;
             obj.accuracy = accuracy;
-            obj.D = getDiffMatrices(obj, obj.diffDegrees, obj.accuracy);
+            obj.D = initialiseDiffMatrices(obj, obj.diffDegrees, obj.accuracy);
         end
         
         function dy = diff(obj, y, deg)
@@ -25,10 +25,14 @@ classdef FDDomain < Domain
             
             dy = {dy};
         end
+        
+        function D = getDiffMatrix(obj, deg)
+            D = obj.D{findDiffCellIndex(obj,deg)};
+        end
     end
     
     methods (Access=private)
-        function D = getDiffMatrices(obj, diffDegrees, accuracy)
+        function D = initialiseDiffMatrices(obj, diffDegrees, accuracy)
             
             D = cell(1,size(diffDegrees,2));
             

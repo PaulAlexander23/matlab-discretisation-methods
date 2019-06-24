@@ -58,6 +58,19 @@ function test1dPseudoSpectral(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-14)
 end
 
+function test1dFiniteDifferenceGetDiffMatrix(testCase)
+    x = setup1dX(2^8);
+    
+    domain = FDDomain(x, 1, 2);
+    
+    degree = 1;
+    
+    actual = domain.getDiffMatrix(degree);
+    expectedSize = [2^8, 2^8];
+    
+    verifyEqual(testCase, size(actual), expectedSize);
+end
+
 function testEvaluatingFunction1dFiniteDifference(testCase)
     x = setup1dX(2^8);
     
