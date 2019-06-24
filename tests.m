@@ -4,7 +4,7 @@ end
 
 function testDomain1d(testCase)
     expectedX = setup1dX(2^8);
-    expectedShape = 2^8;
+    expectedShape = [2^8, 1];
     
     domain = Domain(expectedX);
     actualX = domain.x;
@@ -65,6 +65,18 @@ function testEvaluatingFunction1dFiniteDifference(testCase)
     
     [actual, expected] = function1d(domain);
     
+    verifySize(testCase, actual, [2^8, 1])
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
+function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
+    x = setup1dX(2^8);
+    
+    domain = FDDomain(x, [1, 2], 2);
+    
+    [actual, expected] = function1dVectorised(domain);
+    
+    verifySize(testCase, actual, [2^8, 2])
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
@@ -135,12 +147,36 @@ function testEvaluatingFunction2dPseudoSpectral(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-15)
 end
 
+function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
+    x = setup2dX(2^8);
+    
+    problemDeg = [1,0;0,1]';
+    
+    domain = FDDomain(x, problemDeg, 2);
+    
+    [actual, expected] = function2dVectorised(domain);
+    
+    verifySize(testCase, actual, [2^8, 2^8, 2])
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
 function [actual, expected] = function1d(domain)
     y = cos(2 * pi * domain.x{1});
     dy = domain.diff(y, 1);
     d2y = domain.diff(y, 2);
     actual = d2y{1}/(4*pi^2) + dy{1}/(2*pi) + y;
     expected = - sin(2 * pi * domain.x{1});
+end
+
+function [actual, expected] = function1dVectorised(domain)
+    y = cos(2 * pi * domain.x{1});
+    y2 = cos(2 * pi * domain.x{1});
+    dy = domain.diff([y, y2], 1);
+    d2y = domain.diff([y, y2], 2);
+    actual = d2y{1}/(4*pi^2) + dy{1}/(2*pi) + y;
+    expected = cat(2, ...
+        - sin(2 * pi * domain.x{1}), ...
+        - sin(2 * pi * domain.x{1}));
 end
 
 function [actual, expected] = function2d(domain)
@@ -152,6 +188,21 @@ function [actual, expected] = function2d(domain)
     
     actual = dy1/2/pi + dy2/2/pi;
     expected = -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}');
+end
+
+function [actual, expected] = function2dVectorised(domain)
+    y = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
+    y = reshape(y,[1, numel(y)]);
+    y2 = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
+    y2 = reshape(y2,[1, numel(y2)]);
+    
+    dy1 = cell2mat(domain.diff([y, y2], [1, 0]'));
+    dy2 = cell2mat(domain.diff([y, y2], [0, 1]'));
+    
+    actual = dy1/2/pi + dy2/2/pi;
+    expected = cat(3, ...
+        -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}'), ...
+        -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}'));
 end
 
 function x = setup1dX(n)
