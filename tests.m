@@ -137,9 +137,9 @@ end
 
 function [actual, expected] = function1d(domain)
     y = cos(2 * pi * domain.x{1});
-    dy = domain.diff(y, [1, 2]);
-    
-    actual = dy{2}/(4*pi^2) + dy{1}/(2*pi) + y;
+    dy = domain.diff(y, 1);
+    d2y = domain.diff(y, 2);
+    actual = d2y{1}/(4*pi^2) + dy{1}/(2*pi) + y;
     expected = - sin(2 * pi * domain.x{1});
 end
 
