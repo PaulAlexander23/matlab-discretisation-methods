@@ -10,7 +10,7 @@ function out = diff_ps(x, y, degree)
     
     % Determine k in matlab form
     %k = fftshift([0,-N+1:N-1])';
-    k = [0:N-1, 0, 1-N:-1]' * 2*pi/x(end);
+    k = [0:N-1, 0, 1-N:-1]' * 2*pi/x{1}(end);
     
     % Prior suppression
     out(abs(out)<suppression) = 0;
@@ -24,5 +24,7 @@ function out = diff_ps(x, y, degree)
     
     % Transform back into real space
     out = ifft(out);
+    
+    out = num2cell(out,1);
     
 end
