@@ -2,6 +2,24 @@ function tests = tests()
     tests = functiontests(localfunctions);
 end
 
+function testDomain1d(testCase)
+    actual = setup1dX(2^8);
+    
+    domain = Domain(actual);
+    expected = domain.x;
+    
+    verifyEqual(testCase, actual, expected)
+end
+
+function testDomain2d(testCase)
+    actual = setup2dX(2^8);
+    
+    domain = Domain(actual);
+    expected = domain.x;
+    
+    verifyEqual(testCase, actual, expected)
+end
+
 function test1dFiniteDifference(testCase)
     x = setup1dX(2^8);
     

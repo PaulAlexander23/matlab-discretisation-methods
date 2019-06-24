@@ -1,13 +1,12 @@
-classdef FDDomain
+classdef FDDomain < Domain
     properties
-        x
         D
         diffDegrees
     end
     
     methods
         function obj = FDDomain(x, degree, accuracy)
-            obj.x = x;
+            obj = obj@Domain(x);
             obj.D = init_fd(x, degree, accuracy);
             obj.diffDegrees = degree;
         end
