@@ -22,8 +22,6 @@ classdef FDDomain < Domain
             dy = obj.D{index} * dy;
             
             dy = reshapeToShape(obj, dy);
-            
-            dy = {dy};
         end
         
         function D = getDiffMatrix(obj, deg)

@@ -37,7 +37,7 @@ function test1dFiniteDifference(testCase)
     
     degree = 1;
     
-    actual = cell2mat(domain.diff(Y, degree));
+    actual = domain.diff(Y, degree);
     expected = -2*pi*sin(2*pi*x{1});
     
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
@@ -68,7 +68,7 @@ function test1dFiniteDifferenceGetDiffMatrix(testCase)
     actual = domain.getDiffMatrix(degree);
     expectedSize = [2^8, 2^8];
     
-    verifyEqual(testCase, size(actual), expectedSize);
+    verifySize(testCase, actual, expectedSize);
 end
 
 function testEvaluatingFunction1dFiniteDifference(testCase)
@@ -113,7 +113,7 @@ function test2dFiniteDifference(testCase)
     
     degree = [1, 0]';
     
-    actual = cell2mat(domain.diff(Y, degree));
+    actual = domain.diff(Y, degree);
     expected = -2*pi*sin(2*pi*x{1}) .* ones(size(x{2}'));
     
     verifySize(testCase, actual, [2^8, 2^8])
@@ -177,7 +177,7 @@ function [actual, expected] = function1d(domain)
     y = cos(2 * pi * domain.x{1});
     dy = domain.diff(y, 1);
     d2y = domain.diff(y, 2);
-    actual = d2y{1}/(4*pi^2) + dy{1}/(2*pi) + y;
+    actual = d2y/(4*pi^2) + dy/(2*pi) + y;
     expected = - sin(2 * pi * domain.x{1});
 end
 
@@ -186,7 +186,7 @@ function [actual, expected] = function1dVectorised(domain)
     y2 = cos(2 * pi * domain.x{1});
     dy = domain.diff([y, y2], 1);
     d2y = domain.diff([y, y2], 2);
-    actual = d2y{1}/(4*pi^2) + dy{1}/(2*pi) + y;
+    actual = d2y/(4*pi^2) + dy/(2*pi) + y;
     expected = cat(2, ...
         - sin(2 * pi * domain.x{1}), ...
         - sin(2 * pi * domain.x{1}));
@@ -196,8 +196,8 @@ function [actual, expected] = function2d(domain)
     y = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
     y = reshape(y,[1, numel(y)]);
     
-    dy1 = cell2mat(domain.diff(y, [1, 0]'));
-    dy2 = cell2mat(domain.diff(y, [0, 1]'));
+    dy1 = domain.diff(y, [1, 0]');
+    dy2 = domain.diff(y, [0, 1]');
     
     actual = dy1/2/pi + dy2/2/pi;
     expected = -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}');
@@ -209,8 +209,8 @@ function [actual, expected] = function2dVectorised(domain)
     y2 = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
     y2 = reshape(y2,[1, numel(y2)]);
     
-    dy1 = cell2mat(domain.diff([y, y2], [1, 0]'));
-    dy2 = cell2mat(domain.diff([y, y2], [0, 1]'));
+    dy1 = domain.diff([y, y2], [1, 0]');
+    dy2 = domain.diff([y, y2], [0, 1]');
     
     actual = dy1/2/pi + dy2/2/pi;
     expected = cat(3, ...
