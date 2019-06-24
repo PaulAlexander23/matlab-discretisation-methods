@@ -3,21 +3,29 @@ function tests = tests()
 end
 
 function testDomain1d(testCase)
-    actual = setup1dX(2^8);
+    expectedX = setup1dX(2^8);
+    expectedShape = 2^8;
     
-    domain = Domain(actual);
-    expected = domain.x;
+    domain = Domain(expectedX);
+    actualX = domain.x;
+    actualShape = domain.shape;
     
-    verifyEqual(testCase, actual, expected)
+    verifyEqual(testCase, actualX, expectedX)
+    verifyEqual(testCase, actualShape, expectedShape)
+    verifyEqual(testCase, domain.dimension, 1)
 end
 
 function testDomain2d(testCase)
-    actual = setup2dX(2^8);
+    expectedX = setup2dX(2^8);
+    expectedShape = [2^8, 2^8];
     
-    domain = Domain(actual);
-    expected = domain.x;
+    domain = Domain(expectedX);
+    actualX = domain.x;
+    actualShape = domain.shape;
     
-    verifyEqual(testCase, actual, expected)
+    verifyEqual(testCase, actualX, expectedX)
+    verifyEqual(testCase, actualShape, expectedShape)
+    verifyEqual(testCase, domain.dimension, 2)
 end
 
 function test1dFiniteDifference(testCase)
