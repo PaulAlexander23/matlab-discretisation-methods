@@ -182,12 +182,30 @@ function testFbenney2d(testCase)
     
     domain = FDDomain(x, diffDegrees, 4);
     
-    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+    y = 1 + 0.1*cos(2*pi*domain.x{1}) + 0.1*cos(2*pi*domain.x{2}');
     
     params = [1, 7/8*pi, 1, 0.01];
     
     actual = fbenney2d(domain, y, params);
     expectedSize = [2^8, 2^8];
+    
+    verifySize(testCase, actual, expectedSize)
+end
+
+function testFwibl1(testCase)
+    x = setup2dX(2^8);
+    
+    diffDegrees = [1, 0; 0, 1; 2, 0; 0, 2]';
+    
+    domain = FDDomain(x, diffDegrees, 4);
+    
+    y0 = 1 + 0.1*cos(2*pi*domain.x{1}) + 0.1*cos(2*pi*domain.x{2}');
+    F10 = 0.1*cos(2*pi*domain.x{1}) + 0.1*cos(2*pi*domain.x{2}');
+    
+    params = [1, 7/8*pi, 1, 0.01];
+    
+    actual = fwibl1(domain, [y0; F10], params);
+    expectedSize = [2^9, 2^8];
     
     verifySize(testCase, actual, expectedSize)
 end
