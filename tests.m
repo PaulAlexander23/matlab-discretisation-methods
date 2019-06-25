@@ -48,11 +48,15 @@ function test1dPseudoSpectral(testCase)
     
     domain = PSDomain(x);
     
+    verifyEqual(testCase, domain.length, 1);
+    verifyEqual(testCase, domain.wavenumber{1}, ...
+        [0:2^7 - 1, 0, 1 - 2^7:-1]' * 2*pi);
+    
     Y = cos(2*pi*domain.x{1});
     
     degree = 1;
     
-    actual = cell2mat(domain.diff(Y, degree));
+    actual = domain.diff(Y, degree);
     expected = -2*pi*sin(2*pi*x{1});
     
     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-14)
@@ -109,7 +113,6 @@ function test2dFiniteDifference(testCase)
     domain = FDDomain(x, [1, 0]', 2);
     
     Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    Y = reshape(Y,[1, numel(Y)]);
     
     degree = [1, 0]';
     
@@ -126,11 +129,10 @@ function test2dPseudoSpectral(testCase)
     domain = PSDomain(x);
     
     Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    Y = reshape(Y,[1, numel(Y)]);
     
     degree = [1, 0]';
     
-    actual = cell2mat(domain.diff(Y, degree));
+    actual = domain.diff(Y, degree);
     expected = -2*pi*sin(2*pi*x{1}) .* ones(size(x{2}'));
     
     verifySize(testCase, actual, [2^8, 2^8])
@@ -157,7 +159,7 @@ function testEvaluatingFunction2dPseudoSpectral(testCase)
     
     [actual, expected] = function2d(domain);
     
-    verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-15)
+    verifyEqual(testCase,actual,expected,'RelTol',1e-12,'AbsTol',1e-13)
 end
 
 function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
@@ -211,7 +213,6 @@ end
 
 function [actual, expected] = function2d(domain)
     y = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
-    y = reshape(y,[1, numel(y)]);
     
     dy1 = domain.diff(y, [1, 0]');
     dy2 = domain.diff(y, [0, 1]');
@@ -222,9 +223,7 @@ end
 
 function [actual, expected] = function2dVectorised(domain)
     y = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
-    y = reshape(y,[1, numel(y)]);
     y2 = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
-    y2 = reshape(y2,[1, numel(y2)]);
     
     dy1 = domain.diff([y, y2], [1, 0]');
     dy2 = domain.diff([y, y2], [0, 1]');
