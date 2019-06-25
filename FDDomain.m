@@ -14,10 +14,10 @@ classdef FDDomain < Domain
             obj.D = initialiseDiffMatrices(obj, obj.diffDegrees, obj.accuracy);
         end
         
-        function dy = diff(obj, y, deg)
+        function dy = diff(obj, y, degree)
             dy = reshapeToVector(obj, y);
             
-            index = findDiffCellIndex(obj, deg);
+            index = findDiffCellIndex(obj, degree);
             
             dy = obj.D{index} * dy;
             
