@@ -21,7 +21,7 @@ classdef FDDomain < Domain
             
             dy = obj.D{index} * dy;
             
-            dy = reshapeToShape(obj, dy);
+            dy = reshapeToDomain(obj, dy);
         end
         
         function D = getDiffMatrix(obj, deg)
@@ -69,20 +69,8 @@ classdef FDDomain < Domain
             
         end
         
-        function Y = reshapeToVector(obj, y)
-            Y = reshape(y, prod(obj.shape), []);
-        end
-        
         function index = findDiffCellIndex(obj, deg)
             [~, index] = ismember(deg(:,1)', obj.diffDegrees', 'rows');
-        end
-        
-        function y = reshapeToShape(obj, Y)
-            if obj.dimension == 1
-                y = reshape(Y, [obj.shape(1), size(Y, 2)]);
-            else
-                y = reshape(Y, [obj.shape, size(Y, 2)]);
-            end
         end
     end
 end
