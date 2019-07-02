@@ -75,6 +75,14 @@ function test1dFiniteDifferenceGetDiffMatrix(testCase)
     verifySize(testCase, actual, expectedSize);
 end
 
+function [actual, expected] = function1d(domain)
+    y = cos(2*pi*domain.x{1});
+    dy = domain.diff(y, 1);
+    d2y = domain.diff(y, 2);
+    actual = d2y / (4 * pi^2) + dy / (2 * pi) + y;
+    expected = -sin(2*pi*domain.x{1});
+end
+
 function testEvaluatingFunction1dFiniteDifference(testCase)
     x = setup1dX(2^8);
 
@@ -84,6 +92,17 @@ function testEvaluatingFunction1dFiniteDifference(testCase)
 
     verifySize(testCase, actual, [2^8, 1])
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
+end
+
+function [actual, expected] = function1dVectorised(domain)
+    y = cos(2*pi*domain.x{1});
+    y2 = cos(2*pi*domain.x{1});
+    dy = domain.diff([y, y2], 1);
+    d2y = domain.diff([y, y2], 2);
+    actual = d2y / (4 * pi^2) + dy / (2 * pi) + y;
+    expected = cat(2, ...
+        -sin(2*pi*domain.x{1}), ...
+        -sin(2*pi*domain.x{1}));
 end
 
 function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
@@ -139,6 +158,16 @@ function test2dPseudoSpectral(testCase)
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
 end
 
+function [actual, expected] = function2d(domain)
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+
+    dy1 = domain.diff(y, [1, 0]');
+    dy2 = domain.diff(y, [0, 1]');
+
+    actual = dy1 / 2 / pi + dy2 / 2 / pi;
+    expected = -sin(2*pi*domain.x{1}) - sin(2*pi*domain.x{2}');
+end
+
 function testEvaluatingFunction2dFiniteDifference(testCase)
     x = setup2dX(2^8);
 
@@ -162,6 +191,19 @@ function testEvaluatingFunction2dPseudoSpectral(testCase)
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-12, 'AbsTol', 1e-13)
 end
 
+function [actual, expected] = function2dVectorised(domain)
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+    y2 = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+
+    dy1 = domain.diff([y, y2], [1, 0]');
+    dy2 = domain.diff([y, y2], [0, 1]');
+
+    actual = dy1 / 2 / pi + dy2 / 2 / pi;
+    expected = cat(3, ...
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'), ...
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'));
+end
+
 function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     x = setup2dX(2^8);
 
@@ -175,46 +217,82 @@ function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
 end
 
-function [actual, expected] = function1d(domain)
-    y = cos(2*pi*domain.x{1});
-    dy = domain.diff(y, 1);
-    d2y = domain.diff(y, 2);
-    actual = d2y / (4 * pi^2) + dy / (2 * pi) + y;
-    expected = -sin(2*pi*domain.x{1});
+function test1dBoundaryConditionsFiniteDifference(testCase)
+   x = setup1dX(2^8);
+   
+   c0 = [1, 0];
+   c1 = [0, 1];
+   f = [0, 0];
+   
+   domain = FDDomain(x, 1, 4, {[c0, c1, f]});
+   
+   y0 = domain.x{1} .* (domain.x{1} - 1).^3;
+   expected = (domain.x{1} - 1).^3 + 3 * domain.x{1}.^2 .* (domain.x{1} - 1).^2;
+   actual = domain.diff(y0, 1);
+   
+   verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4) 
 end
 
-function [actual, expected] = function1dVectorised(domain)
-    y = cos(2*pi*domain.x{1});
-    y2 = cos(2*pi*domain.x{1});
-    dy = domain.diff([y, y2], 1);
-    d2y = domain.diff([y, y2], 2);
-    actual = d2y / (4 * pi^2) + dy / (2 * pi) + y;
-    expected = cat(2, ...
-        -sin(2*pi*domain.x{1}), ...
-        -sin(2*pi*domain.x{1}));
+function test1dPeriodicBoundaryConditionsFiniteDifference(testCase)
+   x = setup1dX(2^8);
+   
+   domain = FDDomain(x, 1, 4, {'Periodic'});
+   
+   y0 = cos(2 * pi * domain.x{1});
+   expected = -2 * pi * sin(2 * pi * domain.x{1});
+   actual = domain.diff(y0, 1);
+   
+   verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4) 
 end
 
-function [actual, expected] = function2d(domain)
-    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-
-    dy1 = domain.diff(y, [1, 0]');
-    dy2 = domain.diff(y, [0, 1]');
-
-    actual = dy1 / 2 / pi + dy2 / 2 / pi;
-    expected = -sin(2*pi*domain.x{1}) - sin(2*pi*domain.x{2}');
+function test2dBoundaryConditionsFiniteDifference(testCase)
+   x = setup2dX(2^8);
+   
+   xc0 = [ones(2^8,1), zeros(2^8,1)];
+   xc1 = [zeros(2^8,1), zeros(2^8,1)];
+   xf = [zeros(2^8,1), zeros(2^8,1)];
+   yc0 = [ones(2^8,1), zeros(2^8,1)];
+   yc1 = [zeros(2^8,1), ones(2^8,1)];
+   yf = [zeros(2^8,1), zeros(2^8,1)];
+   
+   domain = FDDomain(x, [1, 0; 0, 1]', 4, {[xc0, xc1, xf], [yc0, yc1, yf]});
+   
+   y0 = (domain.x{1}.^2 /2 - domain.x{1}) .* (cos(2*pi * domain.x{2}') - 1);
+   expectedx = (cos(2*pi * domain.x{2}') - 1) .* (domain.x{1} - 1);
+   expectedy = -2*pi * sin(2*pi * domain.x{2}') .* (domain.x{1}.^2 /2 - domain.x{1});
+   
+   verifyEqual(testCase, domain.diff(y0, [1; 0]), expectedx, 'RelTol', 1e-3, 'AbsTol', 1e-4)
+   verifyEqual(testCase, domain.diff(y0, [0; 1]), expectedy, 'RelTol', 1e-3, 'AbsTol', 1e-4) 
 end
 
-function [actual, expected] = function2dVectorised(domain)
-    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    y2 = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+function test2dPeriodicBoundaryConditionsFiniteDifference1(testCase)
+   x = setup2dX(2^8);
+   
+   xc0 = [ones(2^8,1), zeros(2^8,1)];
+   xc1 = [zeros(2^8,1), zeros(2^8,1)];
+   xf = [zeros(2^8,1), zeros(2^8,1)];
+   
+   domain = FDDomain(x, [1, 0; 0, 1]', 4, {[xc0, xc1, xf], 'Periodic'});
+   
+   y0 = (domain.x{1}.^2 /2 - domain.x{1}) .* cos(2*pi * domain.x{2}');
+   expectedx = cos(2*pi * domain.x{2}') .* (domain.x{1} - 1);
+   expectedy = -2*pi * sin(2*pi * domain.x{2}') .* (domain.x{1}.^2 /2 - domain.x{1});
+   
+   verifyEqual(testCase, domain.diff(y0, [1; 0]), expectedx, 'RelTol', 1e-3, 'AbsTol', 1e-4)
+   verifyEqual(testCase, domain.diff(y0, [0; 1]), expectedy, 'RelTol', 1e-3, 'AbsTol', 1e-4) 
+end
 
-    dy1 = domain.diff([y, y2], [1, 0]');
-    dy2 = domain.diff([y, y2], [0, 1]');
-
-    actual = dy1 / 2 / pi + dy2 / 2 / pi;
-    expected = cat(3, ...
-        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'), ...
-        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'));
+function test2dPeriodicBoundaryConditionsFiniteDifference2(testCase)
+   x = setup2dX(2^8);
+   
+   domain = FDDomain(x, [1, 0; 0, 1]', 4, {'Periodic', 'Periodic'});
+   
+   y0 = cos(2*pi * domain.x{1}) .* cos(2*pi * domain.x{2}');
+   expectedx = cos(2*pi * domain.x{2}') .* -2*pi * sin(2*pi * domain.x{1});
+   expectedy = -2*pi * sin(2*pi * domain.x{2}') .* cos(2*pi * domain.x{1});
+   
+   verifyEqual(testCase, domain.diff(y0, [1; 0]), expectedx, 'RelTol', 1e-3, 'AbsTol', 1e-4)
+   verifyEqual(testCase, domain.diff(y0, [0; 1]), expectedy, 'RelTol', 1e-3, 'AbsTol', 1e-4) 
 end
 
 function x = setup1dX(n)
