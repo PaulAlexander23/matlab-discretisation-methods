@@ -38,7 +38,7 @@ function testDomain2d(testCase)
     verifyEqual(testCase, domain.dimension, 2)
 end
 
-function test1dCentralFiniteDifferenceMatrixConstruction(testCase)
+function test1dPeriodicBCFiniteDifferenceMatrixConstruction(testCase)
     x = {1:16};
     domain = FDDomain(x, 1, 2);
     actual = domain.getDiffMatrix(1);
@@ -49,14 +49,19 @@ function test1dCentralFiniteDifferenceMatrixConstruction(testCase)
     verifyEqual(testCase, actual,expected);
 end
 
-function test1dForwardFiniteDifferenceMatrixConstruction(testCase)
+function test1dZeroBCFiniteDifferenceMatrixConstruction(testCase)
     x = {1:16};
-    domain = FDDomain(x, 1, 2);
+    c0 = ones(16,2);
+    c1 = zeros(16,2);
+    f = zeros(16,2);
+    domain = FDDomain(x, 1, 2, {[c0,c1,f]});
     actual = domain.getDiffMatrix(1);
     B = [-0.5,0.5].*ones(16,1);
     expected = spdiags(B, [-1,1], 16, 16);
-    expected(16,1) = 0.5;
-    expected(1,16) = -0.5;
+    expected(1,1) = 1;
+    expected(1,2) = 0;
+    expected(16,15) = 0;
+    expected(16,16) = 1;
     verifyEqual(testCase, actual,expected);
 end
 
