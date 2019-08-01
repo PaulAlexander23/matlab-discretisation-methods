@@ -12,8 +12,8 @@ function F = fbenney2d(domain, y, params)
     
     gradP = cat(3, domain.diff(P, [1; 0]), domain.diff(P, [0; 1]));
     
-    Q = (2/3 * y.^3 + 8/15 * Re * delta * y.^6 .* domain.diff(y, [1; 0])) .* e1 ...
-        -2/3 * delta * y.^3 .* gradP;
+    Q = (2/3 * domain.multiply(y, y, [2, 1]) + 8/15 * Re * delta * domain.multiply(y, domain.diff(y, [1; 0]), [6, 1])) .* e1 ...
+        -2/3 * delta * domain.multiply(y, gradP, [3, 1]);
     
     F = - domain.diff(Q(:, :, 1), [1, 0]') - ...
         domain.diff(Q(:, :, 2), [0, 1]');

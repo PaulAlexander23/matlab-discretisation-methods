@@ -157,10 +157,22 @@ function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
-function testFbenney2d(testCase)
+function testFiniteDifferenceFbenney2d(testCase)
     diffDegrees = [1, 0; 0, 1; 2, 0; 0, 2]';
     domain = FDDomain(setup2dX(2^8), diffDegrees, 4);
     y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+    params = [1, 7/8*pi, 1, 0.01];
+    
+    actual = fbenney2d(domain, y, params);
+
+    expectedSize = [2^8, 2^8];
+    
+    verifySize(testCase, actual, expectedSize)
+end
+
+function testPseudoSpectralFbenney2d(testCase)
+    domain = PSDomain(setup2dX(2^8));
+    y = domain.fftn(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
     params = [1, 7/8*pi, 1, 0.01];
     
     actual = fbenney2d(domain, y, params);

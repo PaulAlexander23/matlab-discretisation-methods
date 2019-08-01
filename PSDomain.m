@@ -78,17 +78,17 @@ classdef PSDomain < Domain
         end
         
         function upad = zeropad(obj, u, ratio)
-            [N, M] = size(u);
-            upad = zeros(N * ratio, M);
-            ind = [1:N/2, N * (ratio - 0.5) + 1:N * ratio];
-            upad(ind,:) = u;
+            s = size(u);
+            upad = zeros([s(1) * ratio, s(2:end)]);
+            ind = [1:s(1)/2, s(1) * (ratio - 0.5) + 1:s(1) * ratio];
+            upad(ind,:,:) = u;
         end
         
         function uhatpad = matrixZeropad(obj, uhat, ratio)
             if obj.dimension == 1
                 uhatpad = obj.zeropad(uhat,ratio);
             elseif obj.dimension == 2
-                uhatpad = obj.zeropad(obj.zeropad(uhat,ratio)',ratio)';
+                uhatpad = permute(obj.zeropad(permute(obj.zeropad(uhat,ratio),[2,1,3]),ratio),[2,1,3]);
             else
                 error("matrixZeropad not defined for higher dimensions.")
             end
@@ -97,14 +97,14 @@ classdef PSDomain < Domain
         function u = trunc(obj, upad, ratio)
             N = size(upad,1);
             ind = [1:ratio * N/2, N * (1 - ratio/2) + 1:N];
-            u = upad(ind,:);
+            u = upad(ind,:,:);
         end
         
         function uhat = matrixTrunc(obj, uhatpad, ratio)
             if obj.dimension == 1
                 uhat = obj.trunc(uhatpad,1/ratio);
             elseif obj.dimension == 2
-                uhat = obj.trunc(obj.trunc(uhatpad,1/ratio)',1/ratio)';
+                uhat = permute(obj.trunc(permute(obj.trunc(uhatpad,1/ratio),[2,1,3]),1/ratio),[2,1,3]);
             else
                 error("matrixTrunc not defined for higher dimensions.")
             end
