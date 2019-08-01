@@ -24,6 +24,13 @@ classdef FDDomain < Domain
             dy = reshapeToDomain(obj, dy);
         end
         
+        function w = multiply(obj, u, v, powers)
+            if nargin < 4
+                powers = [1, 1];
+            end
+            w = u.^powers(1) .* v.^powers(2);
+        end
+        
         function D = getDiffMatrix(obj, deg)
             D = obj.D{findDiffCellIndex(obj,deg)};
         end
