@@ -2,83 +2,79 @@ function tests = tests()
     tests = functiontests(localfunctions);
 end
 
-function testDomain1d(testCase)
-    expectedX = setup1dX(2^8);
-    expectedShape = [2^8, 1];
-    
-    domain = Domain(expectedX);
+function testDomain1dConstructor(testCase)
+    domain = Domain(setup1dX(2^8));
+
     actualX = domain.x;
     actualShape = domain.shape;
+    
+    expectedX = setup1dX(2^8);
+    expectedShape = [2^8, 1];
     
     verifyEqual(testCase, actualX, expectedX)
     verifyEqual(testCase, actualShape, expectedShape)
     verifyEqual(testCase, domain.dimension, 1)
 end
 
-function testDomain2d(testCase)
-    expectedX = setup2dX(2^8);
-    expectedShape = [2^8, 2^8];
-    
-    domain = Domain(expectedX);
+function testDomain2dConstructor(testCase)
+    domain = Domain(setup2dX(2^8));
+
     actualX = domain.x;
     actualShape = domain.shape;
+    
+    expectedX = setup2dX(2^8);
+    expectedShape = [2^8, 2^8];
     
     verifyEqual(testCase, actualX, expectedX)
     verifyEqual(testCase, actualShape, expectedShape)
     verifyEqual(testCase, domain.dimension, 2)
 end
 
-function test1dFiniteDifference(testCase)
-    x = setup1dX(2^8);
-    
-    domain = FDDomain(x, 1, 2);
-    
-    Y = cos(2*pi*domain.x{1});
-    
-    degree = 1;
-    
-    actual = domain.diff(Y, degree);
-    expected = -2*pi*sin(2*pi*x{1});
-    
-    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
-end
-
-function test1dPseudoSpectral(testCase)
-    x = setup1dX(2^8);
-    
-    domain = PSDomain(x);
+function test1dPseudoSpectralConstructor(testCase)
+    domain = PSDomain(setup1dX(2^8));
     
     verifyEqual(testCase, domain.length, 1);
     verifyEqual(testCase, domain.wavenumber{1}, ...
         [0:2^7 - 1, 0, 1 - 2^7:-1]' * 2*pi);
-    
+end
+
+function test1dFiniteDifferenceDiff(testCase)
+    domain = FDDomain(setup1dX(2^8), 1, 2);
     Y = cos(2*pi*domain.x{1});
-    
     degree = 1;
     
     actual = domain.diff(Y, degree);
-    expected = -2*pi*sin(2*pi*x{1});
+
+    expected = -2*pi*sin(2*pi*domain.x{1});
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
+function test1dPseudoSpectralDiff(testCase)
+    domain = PSDomain(setup1dX(2^8));
+    Y = fft(cos(2*pi*domain.x{1}));
+    degree = 1;
+    
+    actual = ifft(domain.diff(Y, degree));
+
+    expected = -2*pi*sin(2*pi*domain.x{1});
     
     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-14)
 end
 
 function test1dFiniteDifferenceGetDiffMatrix(testCase)
-    x = setup1dX(2^8);
-    
-    domain = FDDomain(x, 1, 2);
-    
+    domain = FDDomain(setup1dX(2^8), 1, 2);
     degree = 1;
     
     actual = domain.getDiffMatrix(degree);
+
     expectedSize = [2^8, 2^8];
     
     verifySize(testCase, actual, expectedSize);
 end
 
 function testEvaluatingFunction1dFiniteDifference(testCase)
-    x = setup1dX(2^8);
-    
-    domain = FDDomain(x, [1, 2], 2);
+    domain = FDDomain(setup1dX(2^8), [1, 2], 2);
     
     [actual, expected] = function1d(domain);
     
@@ -87,9 +83,7 @@ function testEvaluatingFunction1dFiniteDifference(testCase)
 end
 
 function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
-    x = setup1dX(2^8);
-    
-    domain = FDDomain(x, [1, 2], 2);
+    domain = FDDomain(setup1dX(2^8), [1, 2], 2);
     
     [actual, expected] = function1dVectorised(domain);
     
@@ -97,54 +91,45 @@ function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
-function testEvaluatingFunction1dPseudoSpectral(testCase)
-    x = setup1dX(2^8);
-    
-    domain = PSDomain(x);
-    
-    [actual, expected] = function1d(domain);
-    
-    verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-15)
-end
+% function testEvaluatingFunction1dPseudoSpectral(testCase)
+%     x = setup1dX(2^8);
+%     
+%     domain = PSDomain(x);
+%     
+%     [actual, expected] = function1d(domain);
+%     
+%     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-15)
+% end
 
 function test2dFiniteDifference(testCase)
-    x = setup2dX(2^8);
-    
-    domain = FDDomain(x, [1, 0]', 2);
-    
+    domain = FDDomain(setup2dX(2^8), [1, 0]', 2);
     Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    
     degree = [1, 0]';
     
     actual = domain.diff(Y, degree);
-    expected = -2*pi*sin(2*pi*x{1}) .* ones(size(x{2}'));
+
+    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}'));
     
     verifySize(testCase, actual, [2^8, 2^8])
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
 end
 
 function test2dPseudoSpectral(testCase)
-    x = setup2dX(2^8);
-    
-    domain = PSDomain(x);
-    
-    Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    
+    domain = PSDomain(setup2dX(2^8));
+    Y = fftn(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
     degree = [1, 0]';
     
-    actual = domain.diff(Y, degree);
-    expected = -2*pi*sin(2*pi*x{1}) .* ones(size(x{2}'));
+    actual = ifftn(domain.diff(Y, degree));
+
+    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}'));
     
     verifySize(testCase, actual, [2^8, 2^8])
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
 end
 
 function testEvaluatingFunction2dFiniteDifference(testCase)
-    x = setup2dX(2^8);
-    
     problemDeg = [1,0;0,1]';
-    
-    domain = FDDomain(x, problemDeg, 2);
+    domain = FDDomain(setup2dX(2^8), problemDeg, 2);
     
     [actual, expected] = function2d(domain);
     
@@ -152,22 +137,19 @@ function testEvaluatingFunction2dFiniteDifference(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
-function testEvaluatingFunction2dPseudoSpectral(testCase)
-    x = setup2dX(2^8);
-    
-    domain = PSDomain(x);
-    
-    [actual, expected] = function2d(domain);
-    
-    verifyEqual(testCase,actual,expected,'RelTol',1e-12,'AbsTol',1e-13)
-end
+% function testEvaluatingFunction2dPseudoSpectral(testCase)
+%     x = setup2dX(2^8);
+%     
+%     domain = PSDomain(x);
+%     
+%     [actual, expected] = function2d(domain);
+%     
+%     verifyEqual(testCase,actual,expected,'RelTol',1e-12,'AbsTol',1e-13)
+% end
 
 function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
-    x = setup2dX(2^8);
-    
     problemDeg = [1,0;0,1]';
-    
-    domain = FDDomain(x, problemDeg, 2);
+    domain = FDDomain(setup2dX(2^8), problemDeg, 2);
     
     [actual, expected] = function2dVectorised(domain);
     
@@ -176,20 +158,98 @@ function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
 end
 
 function testFbenney2d(testCase)
-    x = setup2dX(2^8);
-    
     diffDegrees = [1, 0; 0, 1; 2, 0; 0, 2]';
-    
-    domain = FDDomain(x, diffDegrees, 4);
-    
+    domain = FDDomain(setup2dX(2^8), diffDegrees, 4);
     y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    
     params = [1, 7/8*pi, 1, 0.01];
     
     actual = fbenney2d(domain, y, params);
+
     expectedSize = [2^8, 2^8];
     
     verifySize(testCase, actual, expectedSize)
+end
+
+function testConvDealiasing(testCase)
+    N = 2^5; M = 2^6;
+    coarseDomain = PSDomain(setup1dX(N));
+    fineDomain = PSDomain(setup1dX(M));
+    u = sin(N/2 * pi * fineDomain.x{1});
+    v = cos((N/2 + 2) * pi * fineDomain.x{1});
+    uhat = fineDomain.fftn(u);
+    vhat = fineDomain.fftn(v);
+
+    actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]));
+    
+    expected = fineDomain.fftn(fineDomain.ifftn(uhat) .* fineDomain.ifftn(vhat));
+
+    plot(real(actual))
+    hold on
+    plot(real(expected([1:N/2,M-N/2+1:M])))
+    
+    verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 1e-13);
+end
+
+function testConvDealiasingHigherPowers(testCase)
+    N = 2^5; M = 2^6;
+    coarseDomain = PSDomain(setup1dX(N));
+    fineDomain = PSDomain(setup1dX(M));
+    u = sin(ceil(N/3) * pi * fineDomain.x{1});
+    v = cos((ceil(N/3) + 2) * pi * fineDomain.x{1});
+    uhat = fineDomain.fftn(u);
+    vhat = fineDomain.fftn(v);
+
+    actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]), [2, 1]);
+    expected = fineDomain.fftn(fineDomain.ifftn(uhat).^2 .* fineDomain.ifftn(vhat));
+    
+    plot(real(actual))
+    hold on
+    plot(real(expected([1:N/2,M-N/2+1:M])))
+
+    verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 1e-2, 'RelTol', 1e-2);
+end
+
+function testConvDealiasingNegativePowers(testCase)
+    N = 2^5; M = 2^6;
+    coarseDomain = PSDomain(setup1dX(N));
+    fineDomain = PSDomain(setup1dX(M));
+    u = sin(ceil(N/3) * pi * fineDomain.x{1}) + 2;
+    v = cos((ceil(N/3) + 2) * pi * fineDomain.x{1});
+    uhat = fft(u)/M;
+    vhat = fft(v)/M;
+
+    actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]), [-1, 1]);
+    expected = fineDomain.fftn((fineDomain.ifftn(uhat)).^-1 .* (fineDomain.ifftn(vhat)));
+    
+    plot(real(actual))
+    hold on
+    plot(real(expected([1:N/2,M-N/2+1:M])))
+
+    verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 1e-2, 'RelTol', 1e-2);
+end
+
+function testFiniteDifferenceDealiasingOnWIBL1(testCase)
+    domain = FDDomain(setup2dX(2^6),[1,0;0,1;2,0;0,2]',4);
+    y = 1 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}');
+    f = 2/3 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}');
+    Y = [y;f];
+    params = [1, pi/4, 1, 0.01];
+    
+    actual = fwibl1(domain, Y, params);
+
+    verifyTrue(testCase, all(max(actual)<1e5))
+end
+
+function testPseudoSpectralDealiasingOnWIBL1(testCase)
+    domain = PSDomain(setup2dX(2^6));
+    y = domain.fftn(1 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}'));
+    f = domain.fftn(2/3 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}'));
+    Y = [y;f];
+    params = [1, pi/4, 1, 0.01];
+    
+    actual = fwibl1(domain, Y, params);
+    
+    verifyTrue(testCase, all(max(actual)<1e5))
 end
 
 function [actual, expected] = function1d(domain)
