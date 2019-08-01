@@ -225,7 +225,7 @@ function testConvDealiasingNegativePowers(testCase)
     hold on
     plot(real(expected([1:N/2,M-N/2+1:M])))
 
-    verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 1e-2, 'RelTol', 1e-2);
+    verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 2e-2, 'RelTol', 1e-2);
 end
 
 function testFiniteDifferenceDealiasingOnWIBL1(testCase)
