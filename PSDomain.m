@@ -13,17 +13,36 @@ classdef PSDomain < Domain
             obj.suppression = 1e-13;
         end
         
-        function dy = diff(obj, y, degree)
-            y = reshapeToDomain(obj, y);
+        function dyhat = diff(obj, yhat, degree)
+            dyhat = priorSuppression(obj, yhat);
             
-            dy = fftn(y);
+            dyhat = wavenumberMultiplicand(obj, degree).*dyhat;
+        end
+
+        function what = multiply(obj, uhat, vhat, powers) % Convolution Really
+            if nargin < 4
+                powers = [1, 1];
+            end
+            ratio = (sum(abs(powers)) + 1)/2;
             
-            dy = priorSuppression(obj, dy);
+            upad = obj.ifftn(obj.matrixZeropad(uhat,ratio)) * ratio.^obj.dimension;
+            vpad = obj.ifftn(obj.matrixZeropad(vhat,ratio)) * ratio.^obj.dimension;
             
-            dy = wavenumberMultiplicand(obj, degree).*dy;
+            wpad = upad.^powers(1) .* vpad.^powers(2);
             
-            dy = ifftn(dy);
-            
+            what = obj.matrixTrunc( ...
+                obj.fftn(wpad) / ratio.^obj.dimension ...
+                , ratio);
+        end
+        
+        function f = fftn(obj, x)
+            dt = prod(obj.length ./ obj.shape');
+            f = fftn(x) * dt;
+        end
+        
+        function f = ifftn(obj, x)
+            dt = prod(obj.length ./ obj.shape');
+            f = ifftn(x, 'symmetric') / dt;
         end
     end
     
@@ -44,8 +63,8 @@ classdef PSDomain < Domain
             end
         end
         
-        function dy = priorSuppression(obj, dy)
-            dy(abs(dy)<obj.suppression) = 0;
+        function dyhat = priorSuppression(obj, dyhat)
+            dyhat(abs(dyhat)<obj.suppression) = 0;
         end
         
         function f = wavenumberMultiplicand(obj, degree)
@@ -55,6 +74,39 @@ classdef PSDomain < Domain
                 f = (1i*obj.wavenumber{1}).^degree(1)*(1i*obj.wavenumber{2}').^degree(2);
             else
                 error("diff not defined for higher dimensions.")
+            end
+        end
+        
+        function upad = zeropad(obj, u, ratio)
+            [N, M] = size(u);
+            upad = zeros(N * ratio, M);
+            ind = [1:N/2, N * (ratio - 0.5) + 1:N * ratio];
+            upad(ind,:) = u;
+        end
+        
+        function uhatpad = matrixZeropad(obj, uhat, ratio)
+            if obj.dimension == 1
+                uhatpad = obj.zeropad(uhat,ratio);
+            elseif obj.dimension == 2
+                uhatpad = obj.zeropad(obj.zeropad(uhat,ratio)',ratio)';
+            else
+                error("matrixZeropad not defined for higher dimensions.")
+            end
+        end
+        
+        function u = trunc(obj, upad, ratio)
+            N = size(upad,1);
+            ind = [1:ratio * N/2, N * (1 - ratio/2) + 1:N];
+            u = upad(ind,:);
+        end
+        
+        function uhat = matrixTrunc(obj, uhatpad, ratio)
+            if obj.dimension == 1
+                uhat = obj.trunc(uhatpad,1/ratio);
+            elseif obj.dimension == 2
+                uhat = obj.trunc(obj.trunc(uhatpad,1/ratio)',1/ratio)';
+            else
+                error("matrixTrunc not defined for higher dimensions.")
             end
         end
     end
