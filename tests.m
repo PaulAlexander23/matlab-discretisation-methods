@@ -157,31 +157,6 @@ function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
-function testFiniteDifferenceFbenney2d(testCase)
-    diffDegrees = [1, 0; 0, 1; 2, 0; 0, 2]';
-    domain = FDDomain(setup2dX(2^8), diffDegrees, 4);
-    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    params = [1, 7/8*pi, 1, 0.01];
-    
-    actual = fbenney2d(domain, y, params);
-
-    expectedSize = [2^8, 2^8];
-    
-    verifySize(testCase, actual, expectedSize)
-end
-
-function testPseudoSpectralFbenney2d(testCase)
-    domain = PSDomain(setup2dX(2^8));
-    y = domain.fftn(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
-    params = [1, 7/8*pi, 1, 0.01];
-    
-    actual = fbenney2d(domain, y, params);
-
-    expectedSize = [2^8, 2^8];
-    
-    verifySize(testCase, actual, expectedSize)
-end
-
 function testConvDealiasing(testCase)
     N = 2^5; M = 2^6;
     coarseDomain = PSDomain(setup1dX(N));
@@ -238,30 +213,6 @@ function testConvDealiasingNegativePowers(testCase)
     plot(real(expected([1:N/2,M-N/2+1:M])))
 
     verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 2e-2, 'RelTol', 1e-2);
-end
-
-function testFiniteDifferenceDealiasingOnWIBL1(testCase)
-    domain = FDDomain(setup2dX(2^6),[1,0;0,1;2,0;0,2]',4);
-    y = 1 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}');
-    f = 2/3 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}');
-    Y = [y;f];
-    params = [1, pi/4, 1, 0.01];
-    
-    actual = fwibl1(domain, Y, params);
-
-    verifyTrue(testCase, all(max(actual)<1e5))
-end
-
-function testPseudoSpectralDealiasingOnWIBL1(testCase)
-    domain = PSDomain(setup2dX(2^6));
-    y = domain.fftn(1 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}'));
-    f = domain.fftn(2/3 + 0.1 * cos(4*pi*domain.x{1}) + 0.1 * cos(4*pi*domain.x{2}'));
-    Y = [y;f];
-    params = [1, pi/4, 1, 0.01];
-    
-    actual = fwibl1(domain, Y, params);
-    
-    verifyTrue(testCase, all(max(actual)<1e5))
 end
 
 function [actual, expected] = function1d(domain)
