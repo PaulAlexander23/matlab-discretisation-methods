@@ -232,9 +232,9 @@ function testConvDealiasing(testCase)
     
     expected = fineDomain.fftn(fineDomain.ifftn(uhat) .* fineDomain.ifftn(vhat));
 
-    plot(real(actual))
-    hold on
-    plot(real(expected([1:N/2,M-N/2+1:M])))
+%     plot(real(actual))
+%     hold on
+%     plot(real(expected([1:N/2,M-N/2+1:M])))
     
     verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 1e-13);
 end
@@ -251,9 +251,9 @@ function testConvDealiasingHigherPowers(testCase)
     actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]), [2, 1]);
     expected = fineDomain.fftn(fineDomain.ifftn(uhat).^2 .* fineDomain.ifftn(vhat));
     
-    plot(real(actual))
-    hold on
-    plot(real(expected([1:N/2,M-N/2+1:M])))
+%     plot(real(actual))
+%     hold on
+%     plot(real(expected([1:N/2,M-N/2+1:M])))
 
     verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 1e-2, 'RelTol', 1e-2);
 end
@@ -270,9 +270,9 @@ function testConvDealiasingNegativePowers(testCase)
     actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]), [-1, 1]);
     expected = fineDomain.fftn((fineDomain.ifftn(uhat)).^-1 .* (fineDomain.ifftn(vhat)));
     
-    plot(real(actual))
-    hold on
-    plot(real(expected([1:N/2,M-N/2+1:M])))
+%     plot(real(actual))
+%     hold on
+%     plot(real(expected([1:N/2,M-N/2+1:M])))
 
     verifyEqual(testCase, actual, expected([1:N/2,M-N/2+1:M]), 'AbsTol', 2e-2, 'RelTol', 1e-2);
 end
