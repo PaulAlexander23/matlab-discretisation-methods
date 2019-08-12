@@ -157,6 +157,68 @@ function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
+function testZeropad1D(testCase)
+    N = 32;
+    domain = PSDomain(setup1dX(N));
+    
+    f = domain.x{1};
+    ratio = 3/2;
+    
+    actual = domain.zeropad(f, ratio);
+    
+    expected = zeros(48,1);
+    expected(1:N/2) = f(1:N/2);
+    expected(ratio*N-N/2+1:ratio*N) = f(1+N/2:end);
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testZeropad2D(testCase)
+    N = 32;
+    domain = PSDomain(setup2dX(N));
+    
+    f = domain.x{1} + domain.x{2}';
+    ratio = 3/2;
+    
+    actual = domain.zeropad(f, ratio);
+    
+    expected = zeros(48);
+    expected(1:N/2,1:N/2) = f(1:N/2,1:N/2);
+    expected(1:N/2,ratio*N-N/2+1:ratio*N) = f(1:N/2,1+N/2:end);
+    expected(ratio*N-N/2+1:ratio*N,1:N/2) = f(1+N/2:end,1:N/2);
+    expected(ratio*N-N/2+1:ratio*N,ratio*N-N/2+1:ratio*N) = f(1+N/2:end,1+N/2:end);
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testTruncation1D(testCase)
+    N = 3*32;
+    domain = PSDomain(setup1dX(N));
+    
+    f = domain.x{1};
+    ratio = 2/3;
+    
+    actual = domain.trunc(f, ratio);
+    
+    expected = f([1:N*1/3, N*2/3+1:N]);
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testTruncation2D(testCase)
+    N = 3*32;
+    domain = PSDomain(setup2dX(N));
+    
+    f = domain.x{1} + domain.x{2}';
+    ratio = 2/3;
+    
+    actual = domain.trunc(f, ratio);
+    
+    expected = f([1:N*1/3, N*2/3+1:N], [1:N*1/3, N*2/3+1:N]);
+    
+    verifyEqual(testCase, actual, expected);
+end
+
 function testConvDealiasing(testCase)
     N = 2^5; M = 2^6;
     coarseDomain = PSDomain(setup1dX(N));
