@@ -3,6 +3,7 @@ classdef PSDomain < Domain
         length
         wavenumber
         suppression
+        normaliseAmplitude
     end
     
     methods
@@ -11,6 +12,7 @@ classdef PSDomain < Domain
             obj.length = calculateLength(obj);
             obj.wavenumber = calculateWavenumber(obj);
             obj.suppression = 1e-13;
+            obj.normaliseAmplitude = (2/prod(obj.shape)) / obj.fftScaling();
         end
         
         function dyhat = diff(obj, yhat, degree)
@@ -36,13 +38,11 @@ classdef PSDomain < Domain
         end
         
         function f = fftn(obj, x)
-            dt = prod(obj.length ./ obj.shape');
-            f = fftn(x) * dt;
+            f = fftn(x) * obj.fftScaling();
         end
         
         function f = ifftn(obj, x)
-            dt = prod(obj.length ./ obj.shape');
-            f = ifftn(x, 'symmetric') / dt;
+            f = ifftn(x, 'symmetric') / obj.fftScaling();
         end
 
         function uhatpad = zeropad(obj, uhat, ratio)
@@ -80,6 +80,14 @@ classdef PSDomain < Domain
             for d = 1:obj.dimension
                 k{d} = [0:obj.shape(d)/2 - 1, 0, 1 - obj.shape(d)/2:-1]' * ...
                     2*pi/obj.length(d);
+            end
+        end
+        
+        function scaling = fftScaling(obj)
+            if obj.dimension == 1
+                scaling = obj.length / obj.shape(1);
+            else
+                scaling = prod(obj.length ./ obj.shape');
             end
         end
         
