@@ -52,12 +52,22 @@ end
 
 function test1dPseudoSpectralDiff(testCase)
     domain = PSDomain(setup1dX(2^8));
-    Y = fft(cos(2*pi*domain.x{1}));
+    Y = domain.fft(cos(2*pi*domain.x{1}));
+
     degree = 1;
     
-    actual = ifft(domain.diff(Y, degree));
-
+    actual = domain.ifft(domain.diff(Y, degree));
     expected = -2*pi*sin(2*pi*domain.x{1});
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-14)
+end
+
+function test2dPseudoSpectralDiff(testCase)
+    domain = PSDomain(setup2dX(2^8, 2^7));
+    Y = domain.fft(cos(2*pi*domain.x{1}) + 0 * domain.x{2}');
+
+    actual = domain.ifft(domain.diff(Y, [1, 0]'));
+    expected = -2*pi*sin(2*pi*domain.x{1}) + 0 * domain.x{2}';
     
     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-14)
 end
@@ -109,16 +119,6 @@ function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
-% function testEvaluatingFunction1dPseudoSpectral(testCase)
-%     x = setup1dX(2^8);
-%     
-%     domain = PSDomain(x);
-%     
-%     [actual, expected] = function1d(domain);
-%     
-%     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-15)
-% end
-
 function test2dFiniteDifference(testCase)
     domain = FDDomain(setup2dX(2^8), [1, 0]', 2);
     Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
@@ -133,16 +133,14 @@ function test2dFiniteDifference(testCase)
 end
 
 function test2dPseudoSpectral(testCase)
-    domain = PSDomain(setup2dX(2^8));
-    Y = fftn(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
+    domain = PSDomain({linspace(1/2^7,1,2^7)';linspace(1/2^8,1,2^8)'});
+    Y = domain.fft(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
     degree = [1, 0]';
     
-    actual = ifftn(domain.diff(Y, degree));
-
+    actual = domain.ifft(domain.diff(Y, degree));
     expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}'));
     
-    verifySize(testCase, actual, [2^8, 2^8])
-    verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
+    verifyEqual(testCase, actual, expected, 'RelTol', 1e-14, 'AbsTol', 1e-14)
 end
 
 function testEvaluatingFunction2dFiniteDifference(testCase)
@@ -154,16 +152,6 @@ function testEvaluatingFunction2dFiniteDifference(testCase)
     verifySize(testCase, actual, [2^8, 2^8])
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
-
-% function testEvaluatingFunction2dPseudoSpectral(testCase)
-%     x = setup2dX(2^8);
-%     
-%     domain = PSDomain(x);
-%     
-%     [actual, expected] = function2d(domain);
-%     
-%     verifyEqual(testCase,actual,expected,'RelTol',1e-12,'AbsTol',1e-13)
-% end
 
 function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     problemDeg = [1,0;0,1]';
@@ -361,6 +349,9 @@ function x = setup1dX(n)
     x = {linspace(1/n,1,n)'};
 end
 
-function x = setup2dX(n)
-    x = {linspace(1/n,1,n)';linspace(1/n,1,n)'};
+function x = setup2dX(m,n)
+    if nargin < 2
+        n = m;
+    end
+    x = {linspace(1/m,1,m)';linspace(1/n,1,n)'};
 end
