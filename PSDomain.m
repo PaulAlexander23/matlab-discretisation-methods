@@ -28,17 +28,17 @@ classdef PSDomain < Domain
             end
             ratio = (sum(abs(powers)) + 1)/2;
             
-            upad = obj.ifftn(obj.zeropad(uhat,ratio)) * ratio.^obj.dimension;
-            vpad = obj.ifftn(obj.zeropad(vhat,ratio)) * ratio.^obj.dimension;
+            upad = obj.ifft(obj.zeropad(uhat,ratio)) * ratio.^obj.dimension;
+            vpad = obj.ifft(obj.zeropad(vhat,ratio)) * ratio.^obj.dimension;
             
             wpad = upad.^powers(1) .* vpad.^powers(2);
             
             what = obj.trunc( ...
-                obj.fftn(wpad) / ratio.^obj.dimension ...
+                obj.fft(wpad) / ratio.^obj.dimension ...
                 , 1/ratio);
         end
         
-        function f = fftn(obj, x)
+        function f = fft(obj, x)
             if obj.dimension == 1
                 f = fft(x);
             elseif obj.dimension == 2
@@ -49,7 +49,7 @@ classdef PSDomain < Domain
             f = f * obj.scaling;
         end
         
-        function x = ifftn(obj, f)
+        function x = ifft(obj, f)
             if obj.dimension == 1
                 x = ifft(f, 'symmetric');
             elseif obj.dimension == 2

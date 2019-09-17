@@ -78,7 +78,7 @@ function testPseudoSpectralScaling1d(testCase)
    domain = PSDomain(setup1dX(n));
    amplitude = 2;
    y = amplitude * cos(2 * pi * domain.x{1});
-   fy = domain.fftn(y);
+   fy = domain.fft(y);
    verifyEqual(testCase, max(real(fy)), amplitude, 'RelTol', 1e-3);
 end
 
@@ -87,7 +87,7 @@ function testPseudoSpectralScaling2d(testCase)
    domain = PSDomain(setup2dX(n));
    amplitude = 2;
    y = amplitude * cos(2 * pi * (domain.x{1} + domain.x{2}'));
-   fy = domain.fftn(y);
+   fy = domain.fft(y);
    verifyEqual(testCase, max(max(real(fy))), amplitude, 'RelTol', 1.3e-3);
 end
 
@@ -241,7 +241,7 @@ function testConvolution1d(testCase)
     N = 2^7;
     domain = PSDomain(setup1dX(N));
     y = cos(2*pi*domain.x{1});
-    fy = domain.fftn(y);
+    fy = domain.fft(y);
     actual = domain.multiply(fy, fy);
     expected = zeros(N,1);
     expected(1) = 1;
@@ -257,12 +257,12 @@ function testConvDealiasing(testCase)
     fineDomain = PSDomain(setup1dX(M));
     u = sin(N/2 * pi * fineDomain.x{1});
     v = cos((N/2 + 2) * pi * fineDomain.x{1});
-    uhat = fineDomain.fftn(u);
-    vhat = fineDomain.fftn(v);
+    uhat = fineDomain.fft(u);
+    vhat = fineDomain.fft(v);
 
     actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]));
     
-    expected = fineDomain.fftn(u .* v);
+    expected = fineDomain.fft(u .* v);
 
 %     plot(real(actual))
 %     hold on
@@ -277,11 +277,11 @@ function testConvDealiasingHigherPowers(testCase)
     fineDomain = PSDomain(setup1dX(M));
     u = sin(ceil(N/3) * pi * fineDomain.x{1});
     v = cos((ceil(N/3) + 2) * pi * fineDomain.x{1});
-    uhat = fineDomain.fftn(u);
-    vhat = fineDomain.fftn(v);
+    uhat = fineDomain.fft(u);
+    vhat = fineDomain.fft(v);
     
     actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]), [2, 1]);
-    expected = fineDomain.fftn(u.^2 .* v);
+    expected = fineDomain.fft(u.^2 .* v);
 
 %     figure;
 %     hold on;
@@ -297,11 +297,11 @@ function testConvDealiasingNegativePowers(testCase)
     fineDomain = PSDomain(setup1dX(M));
     u = sin(ceil(N/3) * pi * fineDomain.x{1}) + 2;
     v = cos((ceil(N/3) + 2) * pi * fineDomain.x{1});
-    uhat = fineDomain.fftn(u);
-    vhat = fineDomain.fftn(v);
+    uhat = fineDomain.fft(u);
+    vhat = fineDomain.fft(v);
 
     actual = coarseDomain.multiply(uhat([1:N/2,M-N/2+1:M]), vhat([1:N/2,M-N/2+1:M]), [-1, 1]);
-    expected = fineDomain.fftn((fineDomain.ifftn(uhat)).^-1 .* (fineDomain.ifftn(vhat)));
+    expected = fineDomain.fft((fineDomain.ifft(uhat)).^-1 .* (fineDomain.ifft(vhat)));
     
 %     figure;
 %     plot(real(actual))
