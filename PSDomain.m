@@ -3,16 +3,23 @@ classdef PSDomain < Domain
         length
         wavenumber
         suppression
-        normaliseAmplitude
+        antialiasing
+        shortwavefilter
         scaling
     end
     
     methods
-        function obj = PSDomain(x)
+        function obj = PSDomain(x, suppression, antialiasing, shortwavefilter)
+            if nargin < 2, suppression = 1e-13; end
+            if nargin < 3, antialiasing = true; end
+            if nargin < 4, shortwavefilter = 1/3; end
+            
             obj = obj@Domain(x);
             obj.length = calculateLength(obj);
             obj.wavenumber = calculateWavenumber(obj);
-            obj.suppression = 1e-13;
+            obj.suppression = suppression;
+            obj.antialiasing = antialiasing;
+            obj.shortwavefilter = shortwavefilter;
             obj.scaling = 2/prod(obj.shape);
         end
         
@@ -23,10 +30,13 @@ classdef PSDomain < Domain
         end
 
         function what = multiply(obj, uhat, vhat, powers) % Convolution Really
-            if nargin < 4
-                powers = [1, 1];
+            if nargin < 4, powers = [1, 1]; end
+            
+            if obj.antialiasing
+                ratio = (sum(abs(powers)) + 1)/2;
+            else
+                ratio = 1;
             end
-            ratio = (sum(abs(powers)) + 1)/2;
             
             upad = obj.ifft(obj.zeropad(uhat,ratio)) * ratio.^obj.dimension;
             vpad = obj.ifft(obj.zeropad(vhat,ratio)) * ratio.^obj.dimension;
@@ -100,8 +110,7 @@ classdef PSDomain < Domain
         
         function dyhat = priorSuppression(obj, dyhat)
             dyhat(abs(dyhat)<obj.suppression) = 0;
-            ratio = 1/3;
-            dyhat = obj.filterOutShortWaves(dyhat, ratio);
+            dyhat = obj.filterOutShortWaves(dyhat, obj.shortwavefilter);
         end
         
         function out = filterOutShortWaves(obj, in, ratio)
