@@ -4,6 +4,7 @@ classdef PSDomain < Domain
         wavenumber
         suppression
         normaliseAmplitude
+        scaling
     end
     
     methods
@@ -12,7 +13,7 @@ classdef PSDomain < Domain
             obj.length = calculateLength(obj);
             obj.wavenumber = calculateWavenumber(obj);
             obj.suppression = 1e-13;
-            obj.normaliseAmplitude = (2/prod(obj.shape)) / obj.fftScaling();
+            obj.scaling = 2/prod(obj.shape);
         end
         
         function dyhat = diff(obj, yhat, degree)
@@ -38,11 +39,25 @@ classdef PSDomain < Domain
         end
         
         function f = fftn(obj, x)
-            f = fftn(x) * obj.fftScaling();
+            if obj.dimension == 1
+                f = fft(x);
+            elseif obj.dimension == 2
+                f = fft2(x);
+            else
+                error('fft in 3 dimensions and higher is not defined yet.')
+            end
+            f = f * obj.scaling;
         end
         
-        function f = ifftn(obj, x)
-            f = ifftn(x, 'symmetric') / obj.fftScaling();
+        function x = ifftn(obj, f)
+            if obj.dimension == 1
+                x = ifft(f, 'symmetric');
+            elseif obj.dimension == 2
+                x = ifft2(f, 'symmetric');
+            else
+                error('ifft in 3 dimensions and higher is not defined yet.')
+            end
+            x = x / obj.scaling;
         end
 
         function uhatpad = zeropad(obj, uhat, ratio)
@@ -80,14 +95,6 @@ classdef PSDomain < Domain
             for d = 1:obj.dimension
                 k{d} = [0:obj.shape(d)/2 - 1, 0, 1 - obj.shape(d)/2:-1]' * ...
                     2*pi/obj.length(d);
-            end
-        end
-        
-        function scaling = fftScaling(obj)
-            if obj.dimension == 1
-                scaling = obj.length / obj.shape(1);
-            else
-                scaling = prod(obj.length ./ obj.shape');
             end
         end
         
