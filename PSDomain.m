@@ -28,7 +28,7 @@ classdef PSDomain < Domain
             
             dyhat = wavenumberMultiplicand(obj, degree).*dyhat;
         end
-
+        
         function what = multiply(obj, uhat, vhat, powers) % Convolution Really
             if nargin < 4, powers = [1, 1]; end
             
@@ -47,7 +47,7 @@ classdef PSDomain < Domain
                 obj.fft(wpad) / ratio.^obj.dimension ...
                 , 1/ratio);
         end
-
+        
         function f = fft(obj, x)
             if obj.dimension == 1
                 f = fft(x);
@@ -69,7 +69,7 @@ classdef PSDomain < Domain
             end
             x = x / obj.scaling;
         end
-
+        
         function uhatpad = zeropad(obj, uhat, ratio)
             if obj.dimension == 1
                 uhatpad = obj.zeropad1d(uhat,ratio);
@@ -128,7 +128,7 @@ classdef PSDomain < Domain
                     end
                 end
             end
-
+            
             out = in .* f;
             
             function out = inRegion(j,k,shape,radii)
@@ -141,9 +141,14 @@ classdef PSDomain < Domain
             
             function out = inEllipse(j,k,centre,radii)
                 out = (j - centre(1)).^2 ./ radii(1).^2 + (k - centre(2)).^2 ./ radii(2).^2 < 1;
+                
+            end
+            
+            function out = inTriangle(j, k, centre, sides)
+                out = abs(j - centre(1)) ./ sides(1) + abs(k - centre(2)) ./ sides(2) < 1;
             end
         end
-
+        
         function f = wavenumberMultiplicand(obj, degree)
             if obj.dimension == 1
                 f = (1i*obj.wavenumber{1}).^degree;
