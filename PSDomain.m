@@ -12,7 +12,7 @@ classdef PSDomain < Domain
         function obj = PSDomain(x, suppression, antialiasing, shortwavefilter)
             if nargin < 2, suppression = 1e-13; end
             if nargin < 3, antialiasing = true; end
-            if nargin < 4, shortwavefilter = 1/3; end
+            if nargin < 4, shortwavefilter = 2/3; end
             
             obj = obj@Domain(x);
             obj.length = calculateLength(obj);
@@ -113,7 +113,8 @@ classdef PSDomain < Domain
             dyhat = obj.filterOutShortWaves(dyhat, obj.shortwavefilter);
         end
         
-        function out = filterOutShortWaves(obj, in, ratio)
+        function out = filterOutShortWaves(obj, in, ratioKeptToAll)
+            ratio = ratioKeptToAll/2;
             if obj.dimension == 1
                 f = ones(obj.shape);
                 f(round(end*ratio+1):round(end-end*ratio)) = 0;
