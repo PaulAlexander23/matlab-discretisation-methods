@@ -26,7 +26,11 @@ classdef PSDomain < Domain
         function dyhat = diff(obj, yhat, degree)
             dyhat = priorSuppression(obj, yhat);
             
-            dyhat = wavenumberMultiplicand(obj, degree).*dyhat;
+            dyhat = obj.diffMat(degree) .* dyhat;
+        end
+        
+        function D = diffMat(obj, degree)
+            D = wavenumberMultiplicand(obj, degree);
         end
         
         function what = multiply(obj, uhat, vhat, powers) % Convolution Really

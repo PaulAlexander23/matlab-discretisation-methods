@@ -86,6 +86,39 @@ function test1dFiniteDifferenceGetDiffMatrix(testCase)
     verifySize(testCase, actual, expectedSize);
 end
 
+function test2dFiniteDifferenceGetDiffMatrix(testCase)
+    degree =  [1, 0]';
+    domain = FDDomain(setup2dX(2^8), degree, 2);
+    
+    actual = domain.diffMat(degree);
+
+    expectedSize = [2^16, 2^16];
+    
+    verifySize(testCase, actual, expectedSize);
+end
+
+function test1dPseudoSpectralGetDiffMatrix(testCase)
+    domain = PSDomain(setup1dX(2^8));
+    degree = 1;
+    
+    actual = domain.diffMat(degree);
+
+    expectedSize = [2^8, 1];
+    
+    verifySize(testCase, actual, expectedSize);
+end
+
+function test2dPseudoSpectralGetDiffMatrix(testCase)
+    domain = PSDomain(setup2dX(2^8));
+    degree = [1, 0];
+    
+    actual = domain.diffMat(degree);
+
+    expectedSize = [2^8, 2^8];
+    
+    verifySize(testCase, actual, expectedSize);
+end
+
 function testPseudoSpectralScaling1d(testCase)
     n = 2^8;
    domain = PSDomain(setup1dX(n));
