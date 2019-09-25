@@ -31,14 +31,13 @@ function testDomain2dConstructor(testCase)
 end
 
 function test1dPseudoSpectralConstructor(testCase)
-    domain = PSDomain(setup1dX(2^8), 1e-13, true, 1/3);
+    domain = PSDomain(setup1dX(2^8), false, 1e-5);
     
     verifyEqual(testCase, domain.length, 1);
     verifyEqual(testCase, domain.wavenumber{1}, ...
         [0:2^7 - 1, 0, 1 - 2^7:-1]' * 2*pi);
-    verifyEqual(testCase, domain.suppression, 1e-13);
-    verifyEqual(testCase, domain.antialiasing, true);
-    verifyEqual(testCase, domain.shortwavefilter, 1/3);
+    verifyEqual(testCase, domain.suppression, 1e-5);
+    verifyEqual(testCase, domain.antialiasing, false);
 end
 
 function test1dFiniteDifferenceDiff(testCase)

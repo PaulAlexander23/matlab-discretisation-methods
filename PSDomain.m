@@ -4,27 +4,24 @@ classdef PSDomain < Domain
         wavenumber
         suppression
         antialiasing
-        shortwavefilter
         scaling
     end
     
     methods
-        function obj = PSDomain(x, suppression, antialiasing, shortwavefilter)
-            if nargin < 2, suppression = 1e-13; end
-            if nargin < 3, antialiasing = true; end
-            if nargin < 4, shortwavefilter = 2/3; end
+        function obj = PSDomain(x, antialiasing, suppression)
+            if nargin < 2, antialiasing = true; end
+            if nargin < 3, suppression = eps; end
             
             obj = obj@Domain(x);
             obj.length = calculateLength(obj);
             obj.wavenumber = calculateWavenumber(obj);
             obj.suppression = suppression;
             obj.antialiasing = antialiasing;
-            obj.shortwavefilter = shortwavefilter;
             obj.scaling = 2/prod(obj.shape);
         end
         
         function dyhat = diff(obj, yhat, degree)
-            dyhat = priorSuppression(obj, yhat);
+            dyhat = suppress(obj, yhat);
             
             dyhat = obj.diffMat(degree) .* dyhat;
         end
@@ -33,23 +30,27 @@ classdef PSDomain < Domain
             D = wavenumberMultiplicand(obj, degree);
         end
         
-        function what = multiply(obj, uhat, vhat, powers) % Convolution Really
+        function what = multiply(obj, uhat, vhat, powers)
             if nargin < 4, powers = [1, 1]; end
             
             if obj.antialiasing
                 ratio = (sum(abs(powers)) + 1)/2;
-            else
-                ratio = 1;
+                
+                uhat = obj.zeropad(uhat,ratio) * ratio.^obj.dimension;
+                vhat = obj.zeropad(vhat,ratio) * ratio.^obj.dimension;
             end
             
-            upad = obj.ifft(obj.zeropad(uhat,ratio)) * ratio.^obj.dimension;
-            vpad = obj.ifft(obj.zeropad(vhat,ratio)) * ratio.^obj.dimension;
+            u = obj.ifft(uhat);
+            v = obj.ifft(vhat);
             
-            wpad = upad.^powers(1) .* vpad.^powers(2);
+            w = u.^powers(1) .* v.^powers(2);
             
-            what = obj.trunc( ...
-                obj.fft(wpad) / ratio.^obj.dimension ...
-                , 1/ratio);
+            what = obj.fft(w);
+            
+            if obj.antialiasing
+                what = obj.trunc(what / ratio.^obj.dimension, ...
+                    1/ratio);
+            end
         end
         
         function f = fft(obj, x)
@@ -61,6 +62,8 @@ classdef PSDomain < Domain
                 error('fft in 3 dimensions and higher is not defined yet.')
             end
             f = f * obj.scaling;
+            
+            f = suppress(obj, f);
         end
         
         function x = ifft(obj, f)
@@ -112,9 +115,8 @@ classdef PSDomain < Domain
             end
         end
         
-        function dyhat = priorSuppression(obj, dyhat)
-            dyhat(abs(dyhat)<obj.suppression) = 0;
-            dyhat = obj.filterOutShortWaves(dyhat, obj.shortwavefilter);
+        function dyhat = suppress(obj, dyhat)
+            dyhat(abs(dyhat)<obj.suppression * max(abs(dyhat),[],'all')) = 0;
         end
         
         function out = filterOutShortWaves(obj, in, ratioKeptToAll)
