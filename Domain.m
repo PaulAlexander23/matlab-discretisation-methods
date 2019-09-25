@@ -9,7 +9,7 @@ classdef Domain
         function obj = Domain(x)
             obj.x = x;
             obj.dimension = length(obj.x);
-            obj.shape = cellfun(@length,obj.x)';
+            obj.shape = reshape(cellfun(@length,obj.x), 1, []);
             if length(obj.shape) == 1, obj.shape = [obj.shape, 1]; end
         end
         
