@@ -79,7 +79,7 @@ function test1dFiniteDifferenceGetDiffMatrix(testCase)
     domain = FDDomain(setup1dX(2^8), 1, 2);
     degree = 1;
     
-    actual = domain.getDiffMatrix(degree);
+    actual = domain.diffMat(degree);
 
     expectedSize = [2^8, 2^8];
     
