@@ -5,19 +5,22 @@ classdef PSDomain < Domain
         suppression
         antialiasing
         scaling
+        complex
     end
     
     methods
-        function obj = PSDomain(x, antialiasing, suppression)
-            if nargin < 2, antialiasing = true; end
-            if nargin < 3, suppression = eps; end
+        function obj = PSDomain(x, antialiasing, complex, suppression)
+            if nargin < 2, antialiasing = false; end
+            if nargin < 3, complex = true; end
+            if nargin < 4, suppression = eps; end
             
             obj = obj@Domain(x);
             obj.length = calculateLength(obj);
-            obj.wavenumber = calculateWavenumber(obj);
             obj.suppression = suppression;
             obj.antialiasing = antialiasing;
             obj.scaling = 2/prod(obj.shape);
+            obj.complex = complex;
+            obj.wavenumber = calculateWavenumber(obj);
         end
         
         function dyhat = diff(obj, yhat, degree)
@@ -61,12 +64,20 @@ classdef PSDomain < Domain
             else
                 error('fft in 3 dimensions and higher is not defined yet.')
             end
-            f = f * obj.scaling;
             
+            if ~obj.complex
+                f = f(1:end/2,:,:);
+            end
+            
+            f = f * obj.scaling;
             f = suppress(obj, f);
         end
         
         function x = ifft(obj, f)
+            if ~obj.complex
+                f = [f; zeros(size(f))];
+            end
+            
             if obj.dimension == 1
                 x = ifft(f, 'symmetric');
             elseif obj.dimension == 2
@@ -81,7 +92,7 @@ classdef PSDomain < Domain
             if obj.dimension == 1
                 uhatpad = obj.zeropad1d(uhat,ratio);
             elseif obj.dimension == 2
-                uhatpad = permute(obj.zeropad1d(permute(obj.zeropad1d(uhat,ratio),[2,1,3]),ratio),[2,1,3]);
+                uhatpad = permute(obj.zeropad1d(permute(obj.zeropad1d(uhat,ratio),[2,1,3]),ratio,2),[2,1,3]);
             else
                 error("zeropad not defined for higher dimensions.")
             end
@@ -91,7 +102,7 @@ classdef PSDomain < Domain
             if obj.dimension == 1
                 uhat = obj.trunc1d(uhatpad,ratio);
             elseif obj.dimension == 2
-                uhat = permute(obj.trunc1d(permute(obj.trunc1d(uhatpad,ratio),[2,1,3]),ratio),[2,1,3]);
+                uhat = permute(obj.trunc1d(permute(obj.trunc1d(uhatpad,ratio),[2,1,3]),ratio,2),[2,1,3]);
             else
                 error("trunc not defined for higher dimensions.")
             end
@@ -110,7 +121,13 @@ classdef PSDomain < Domain
         function k = calculateWavenumber(obj)
             k = cell(1, obj.dimension);
             for d = 1:obj.dimension
-                k{d} = [0:obj.shape(d)/2 - 1, 0, 1 - obj.shape(d)/2:-1]' * ...
+                if ~obj.complex && d == 1
+                    w = (0:obj.shape(d)/2 - 1)';
+                else
+                    w = [0:obj.shape(d)/2 - 1, 0, 1 - obj.shape(d)/2:-1]';
+                end
+                
+                k{d} = w * ...
                     2*pi/obj.length(d);
             end
         end
@@ -166,16 +183,28 @@ classdef PSDomain < Domain
             end
         end
         
-        function upad = zeropad1d(obj, u, ratio)
+        function upad = zeropad1d(obj, u, ratio, dimension)
+            if nargin < 4, dimension = 1; end
+            
             s = size(u);
             upad = zeros([s(1) * ratio, s(2:end)]);
-            ind = [1:s(1)/2, s(1) * (ratio - 0.5) + 1:s(1) * ratio];
+            if ~obj.complex && dimension == 1
+                ind = 1:s(1);
+            else
+                ind = [1:s(1)/2, s(1) * (ratio - 0.5) + 1:s(1) * ratio];
+            end
             upad(ind,:,:) = u;
         end
         
-        function u = trunc1d(obj, upad, ratio)
+        function u = trunc1d(obj, upad, ratio, dimension)
+            if nargin < 4, dimension = 1; end
+            
             N = size(upad,1);
-            ind = [1:ratio * N/2, N * (1 - ratio/2) + 1:N];
+            if ~obj.complex && dimension == 1
+                ind = 1:ratio * N;
+            else
+                ind = [1:ratio * N/2, N * (1 - ratio/2) + 1:N];
+            end
             u = upad(ind,:,:);
         end
     end
