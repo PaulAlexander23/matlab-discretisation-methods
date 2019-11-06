@@ -16,16 +16,22 @@ classdef FDDomain < Domain
 
         function dy = diff(obj, y, degree)
             dy = reshapeToVector(obj, y);
-
-            index = findDiffCellIndex(obj, degree);
-
-            dy = obj.D{index} * dy;
-
+            
+            dy = obj.diffMat(degree) * dy;
+            
             dy = reshapeToDomain(obj, dy);
         end
-
-        function D = getDiffMatrix(obj, deg)
-            D = obj.D{findDiffCellIndex(obj, deg)};
+        
+        function D = diffMat(obj, degree)
+            index = findDiffCellIndex(obj,degree);
+            D = obj.D{index};
+        end
+        
+        function w = multiply(obj, u, v, powers)
+            if nargin < 4
+                powers = [1, 1];
+            end
+            w = u.^powers(1) .* v.^powers(2);
         end
     end
 
