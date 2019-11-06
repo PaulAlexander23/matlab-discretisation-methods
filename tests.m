@@ -244,7 +244,7 @@ function test2dPseudoSpectralGetDiffMatrix(testCase)
     actual = domain.diffMat(degree);
     
     expectedSize = [2^8, 2^8];
-    
+
     verifySize(testCase, actual, expectedSize);
 end
 
@@ -538,49 +538,49 @@ end
 
 %% Functions
 function [actual, expected] = function1d(domain)
-    y = cos(2 * pi * domain.x{1});
+    y = cos(2*pi*domain.x{1});
     dy = domain.diff(y, 1);
     d2y = domain.diff(y, 2);
-    actual = d2y/(4*pi^2) + dy/(2*pi) + y;
-    expected = - sin(2 * pi * domain.x{1});
+    actual = d2y / (4 * pi^2) + dy / (2 * pi) + y;
+    expected = -sin(2*pi*domain.x{1});
 end
 
 function [actual, expected] = function1dVectorised(domain)
-    y = cos(2 * pi * domain.x{1});
-    y2 = cos(2 * pi * domain.x{1});
+    y = cos(2*pi*domain.x{1});
+    y2 = cos(2*pi*domain.x{1});
     dy = domain.diff([y, y2], 1);
     d2y = domain.diff([y, y2], 2);
-    actual = d2y/(4*pi^2) + dy/(2*pi) + y;
+    actual = d2y / (4 * pi^2) + dy / (2 * pi) + y;
     expected = cat(2, ...
-        - sin(2 * pi * domain.x{1}), ...
-        - sin(2 * pi * domain.x{1}));
+        -sin(2*pi*domain.x{1}), ...
+        -sin(2*pi*domain.x{1}));
 end
 
 function [actual, expected] = function2d(domain)
-    y = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
-    
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+
     dy1 = domain.diff(y, [1, 0]');
     dy2 = domain.diff(y, [0, 1]');
-    
-    actual = dy1/2/pi + dy2/2/pi;
-    expected = -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}');
+
+    actual = dy1 / 2 / pi + dy2 / 2 / pi;
+    expected = -sin(2*pi*domain.x{1}) - sin(2*pi*domain.x{2}');
 end
 
 function [actual, expected] = function2dVectorised(domain)
-    y = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
-    y2 = cos(2 * pi * domain.x{1}) + cos(2 * pi * domain.x{2}');
-    
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+    y2 = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+
     dy1 = domain.diff([y, y2], [1, 0]');
     dy2 = domain.diff([y, y2], [0, 1]');
-    
-    actual = dy1/2/pi + dy2/2/pi;
+
+    actual = dy1 / 2 / pi + dy2 / 2 / pi;
     expected = cat(3, ...
-        -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}'), ...
-        -sin(2 * pi * domain.x{1}) - sin(2 * pi * domain.x{2}'));
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'), ...
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'));
 end
 
 function x = setup1dX(n)
-    x = {linspace(1/n,1,n)'};
+    x = {linspace(1/n, 1, n)'};
 end
 
 function x = setup2dX(m,n)

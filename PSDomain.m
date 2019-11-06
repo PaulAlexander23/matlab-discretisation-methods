@@ -7,7 +7,7 @@ classdef PSDomain < Domain
         scaling
         complex
     end
-    
+
     methods
         function obj = PSDomain(x, antialiasing, complex, suppression)
             if nargin < 2, antialiasing = false; end
@@ -108,16 +108,16 @@ classdef PSDomain < Domain
             end
         end
     end
-    
-    methods (Access=private)
+
+    methods(Access = private)
         function L = calculateLength(obj)
             if obj.x{1}(1) ~= 0
                 L = cellfun(@(x) x(end), obj.x);
             else
-                L = cellfun(@(x) x(end) + x(1), obj.x);
+                L = cellfun(@(x) x(end)+x(1), obj.x);
             end
         end
-        
+
         function k = calculateWavenumber(obj)
             k = cell(1, obj.dimension);
             for d = 1:obj.dimension
@@ -174,7 +174,7 @@ classdef PSDomain < Domain
         
         function f = wavenumberMultiplicand(obj, degree)
             if obj.dimension == 1
-                f = (1i*obj.wavenumber{1}).^degree;
+                f = (1i * obj.wavenumber{1}).^degree;
             elseif obj.dimension == 2
                 f = ((1i*obj.wavenumber{1}).^degree(1) * ...
                     (1i*obj.wavenumber{2}').^degree(2));
