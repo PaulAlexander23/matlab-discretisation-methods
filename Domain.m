@@ -29,5 +29,9 @@ classdef Domain
                 y = reshape(Y, [obj.shape, numel(Y) / prod(obj.shape)]);
             end
         end
+        
+        function fq = interp(obj, x, f)
+            fq = interpn(x{:}, f, obj.x{:}, 'spine');
+        end
     end
 end

@@ -72,6 +72,28 @@ function testDomain2dReshapeToDomain(testCase)
     
     verifyEqual(testCase, actual, expected);
 end
+
+function testDomain1dInterpolation(testCase)
+    domain = Domain(setup1dX(2^8));
+    x = {linspace(0,1,100)};
+    f = cos(2*pi*x{1});
+    
+    actual = domain.interp(x,f);
+    expected = cos(2*pi*domain.x{1});
+    
+    verifyEqual(testCase, actual, expected, 'AbsTol', 1e-9, 'RelTol', 1e-6)
+end
+
+function testDomain2dInterpolation(testCase)
+    domain = Domain(setup2dX(2^8));
+    x = {linspace(0,1,100)', linspace(0,1,100)'};
+    f = cos(2*pi*x{1}) + cos(2*pi*x{2}');
+    
+    actual = domain.interp(x,f);
+    expected = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+
+    verifyEqual(testCase, actual, expected, 'AbsTol', 1e-6, 'RelTol', 1e-4)
+end
 %% Finite Difference
 function test1dFiniteDifferenceDiff(testCase)
     domain = FDDomain(setup1dX(2^8), 1, 2);
