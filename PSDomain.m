@@ -133,7 +133,7 @@ classdef PSDomain < Domain
         end
         
         function dyhat = suppress(obj, dyhat)
-            dyhat(abs(dyhat)<obj.suppression * max(abs(dyhat),[],'all')) = 0;
+            dyhat(abs(dyhat)<obj.suppression * max(max(abs(dyhat)))) = 0;
         end
         
         function out = filterOutShortWaves(obj, in, ratioKeptToAll)
