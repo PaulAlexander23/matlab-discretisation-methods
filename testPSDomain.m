@@ -1,120 +1,5 @@
-function tests = tests()
+function tests = testPSDomain()
     tests = functiontests(localfunctions);
-end
-
-%% Domain
-function testDomain1dConstructor(testCase)
-    domain = Domain(setup1dX(2^8));
-    
-    actualX = domain.x;
-    actualShape = domain.shape;
-    
-    expectedX = setup1dX(2^8);
-    expectedShape = [2^8, 1];
-    
-    verifyEqual(testCase, actualX, expectedX)
-    verifyEqual(testCase, actualShape, expectedShape)
-    verifyEqual(testCase, domain.dimension, 1)
-end
-
-function testDomain2dConstructor(testCase)
-    domain = Domain(setup2dX(2^8));
-    
-    actualX = domain.x;
-    actualShape = domain.shape;
-    
-    expectedX = setup2dX(2^8);
-    expectedShape = [2^8, 2^8];
-    
-    verifyEqual(testCase, actualX, expectedX)
-    verifyEqual(testCase, actualShape, expectedShape)
-    verifyEqual(testCase, domain.dimension, 2)
-end
-
-%% Finite Difference
-function test1dFiniteDifferenceDiff(testCase)
-    domain = FDDomain(setup1dX(2^8), 1, 2);
-    Y = cos(2*pi*domain.x{1});
-    degree = 1;
-    
-    actual = domain.diff(Y, degree);
-    
-    expected = -2*pi*sin(2*pi*domain.x{1});
-    
-    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
-end
-
-function test1dFiniteDifferenceGetDiffMatrix(testCase)
-    domain = FDDomain(setup1dX(2^8), 1, 2);
-    degree = 1;
-    
-    actual = domain.diffMat(degree);
-    
-    expectedSize = [2^8, 2^8];
-    
-    verifySize(testCase, actual, expectedSize);
-end
-
-function test2dFiniteDifferenceGetDiffMatrix(testCase)
-    degree =  [1, 0]';
-    domain = FDDomain(setup2dX(2^8), degree, 2);
-    
-    actual = domain.diffMat(degree);
-    
-    expectedSize = [2^16, 2^16];
-    
-    verifySize(testCase, actual, expectedSize);
-end
-
-function testEvaluatingFunction1dFiniteDifference(testCase)
-    domain = FDDomain(setup1dX(2^8), [1, 2], 2);
-    
-    [actual, expected] = function1d(domain);
-    
-    verifySize(testCase, actual, [2^8, 1])
-    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
-end
-
-function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
-    domain = FDDomain(setup1dX(2^8), [1, 2], 2);
-    
-    [actual, expected] = function1dVectorised(domain);
-    
-    verifySize(testCase, actual, [2^8, 2])
-    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
-end
-
-function test2dFiniteDifference(testCase)
-    domain = FDDomain(setup2dX(2^8), [1, 0]', 2);
-    Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    degree = [1, 0]';
-    
-    actual = domain.diff(Y, degree);
-    
-    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}'));
-    
-    verifySize(testCase, actual, [2^8, 2^8])
-    verifyEqual(testCase, actual, expected, 'RelTol', 1e-3, 'AbsTol', 1e-4)
-end
-
-function testEvaluatingFunction2dFiniteDifference(testCase)
-    problemDeg = [1,0;0,1]';
-    domain = FDDomain(setup2dX(2^8), problemDeg, 2);
-    
-    [actual, expected] = function2d(domain);
-    
-    verifySize(testCase, actual, [2^8, 2^8])
-    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
-end
-
-function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
-    problemDeg = [1,0;0,1]';
-    domain = FDDomain(setup2dX(2^8), problemDeg, 2);
-    
-    [actual, expected] = function2dVectorised(domain);
-    
-    verifySize(testCase, actual, [2^8, 2^8, 2])
-    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
 %% Pseudo Spectral
@@ -218,10 +103,10 @@ end
 
 function test2dPseudoSpectralDiff(testCase)
     domain = PSDomain(setup2dX(2^8, 2^7));
-    Y = domain.fft(cos(2*pi*domain.x{1}) + 0 * domain.x{2}');
+    Y = domain.fft(cos(2*pi*domain.x{1}) + 0 * domain.x{2});
     
     actual = domain.ifft(domain.diff(Y, [1, 0]'));
-    expected = -2*pi*sin(2*pi*domain.x{1}) + 0 * domain.x{2}';
+    expected = -2*pi*sin(2*pi*domain.x{1}) + 0 * domain.x{2};
     
     verifyEqual(testCase,actual,expected,'RelTol',1e-14,'AbsTol',1e-14)
 end
@@ -261,29 +146,29 @@ function testPseudoSpectralScaling2d(testCase)
     n = 2^8;
     domain = PSDomain(setup2dX(n));
     amplitude = 2;
-    y = amplitude * cos(2 * pi * (domain.x{1} + domain.x{2}'));
+    y = amplitude * cos(2 * pi * (domain.x{1} + domain.x{2}));
     fy = domain.fft(y);
     verifyEqual(testCase, max(max(real(fy))), amplitude, 'RelTol', 1.3e-3);
 end
 
 function test2dPseudoSpectral(testCase)
-    domain = PSDomain({linspace(1/2^7,1,2^7)';linspace(1/2^8,1,2^8)'});
-    Y = domain.fft(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
+    domain = PSDomain({linspace(1/2^7,1,2^7)';linspace(1/2^8,1,2^8)});
+    Y = domain.fft(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}));
     degree = [1, 0]';
     
     actual = domain.ifft(domain.diff(Y, degree));
-    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}'));
+    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}));
     
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-14, 'AbsTol', 1e-14)
 end
 
 function test2dPseudoSpectralReal(testCase)
     domain = PSDomain({linspace(1/2^7,1,2^7)';linspace(1/2^8,1,2^8)'}, false, false);
-    Y = domain.fft(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}'));
+    Y = domain.fft(cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}));
     degree = [1, 0]';
     
     actual = domain.ifft(domain.diff(Y, degree));
-    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}'));
+    expected = -2*pi*sin(2*pi*domain.x{1}) .* ones(size(domain.x{2}));
     
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-14, 'AbsTol', 1e-14)
 end
@@ -308,7 +193,7 @@ function testZeropad2D(testCase)
     N = 32;
     domain = PSDomain(setup2dX(N));
     
-    f = domain.x{1} + domain.x{2}';
+    f = domain.x{1} + domain.x{2};
     ratio = 3/2;
     
     actual = domain.zeropad(f, ratio);
@@ -340,7 +225,7 @@ function testTruncation2D(testCase)
     N = 3*32;
     domain = PSDomain(setup2dX(N));
     
-    f = domain.x{1} + domain.x{2}';
+    f = domain.x{1} + domain.x{2};
     ratio = 2/3;
     
     actual = domain.trunc(f, ratio);
@@ -369,7 +254,7 @@ function testZeropad2DReal(testCase)
     N = 32;
     domain = PSDomain(setup2dX(N), false, false);
     
-    f = domain.x{1} + domain.x{2}';
+    f = domain.x{1} + domain.x{2};
     ratio = 3/2;
     
     actual = domain.zeropad(f, ratio);
@@ -398,7 +283,7 @@ function testTruncation2DReal(testCase)
     N = 3*32;
     domain = PSDomain(setup2dX(N), false, false);
     
-    f = domain.x{1} + domain.x{2}';
+    f = domain.x{1} + domain.x{2};
     ratio = 2/3;
     
     actual = domain.trunc(f, ratio);
@@ -557,26 +442,26 @@ function [actual, expected] = function1dVectorised(domain)
 end
 
 function [actual, expected] = function2d(domain)
-    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
 
     dy1 = domain.diff(y, [1, 0]');
     dy2 = domain.diff(y, [0, 1]');
 
     actual = dy1 / 2 / pi + dy2 / 2 / pi;
-    expected = -sin(2*pi*domain.x{1}) - sin(2*pi*domain.x{2}');
+    expected = -sin(2*pi*domain.x{1}) - sin(2*pi*domain.x{2});
 end
 
 function [actual, expected] = function2dVectorised(domain)
-    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
-    y2 = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2}');
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    y2 = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
 
     dy1 = domain.diff([y, y2], [1, 0]');
     dy2 = domain.diff([y, y2], [0, 1]');
 
     actual = dy1 / 2 / pi + dy2 / 2 / pi;
     expected = cat(3, ...
-        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'), ...
-        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}'));
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}), ...
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}));
 end
 
 function x = setup1dX(n)
@@ -587,5 +472,5 @@ function x = setup2dX(m,n)
     if nargin < 2
         n = m;
     end
-    x = {linspace(1/m,1,m)';linspace(1/n,1,n)'};
+    x = {linspace(1/m,1,m)';linspace(1/n,1,n)};
 end
