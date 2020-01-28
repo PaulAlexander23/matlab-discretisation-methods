@@ -117,18 +117,18 @@ function test1dPseudoSpectralGetDiffMatrix(testCase)
     
     actual = domain.diffMat(degree);
     
-    expectedSize = [2^8, 1];
+    expectedSize = [2^8, 2^8];
     
     verifySize(testCase, actual, expectedSize);
 end
 
 function test2dPseudoSpectralGetDiffMatrix(testCase)
     domain = PSDomain(setup2dX(2^8));
-    degree = [1, 0];
+    degree = [1, 0]';
     
     actual = domain.diffMat(degree);
     
-    expectedSize = [2^8, 2^8];
+    expectedSize = [2^16, 2^16];
 
     verifySize(testCase, actual, expectedSize);
 end

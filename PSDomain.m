@@ -23,10 +23,34 @@ classdef PSDomain < Domain
             obj.wavenumber = calculateWavenumber(obj);
         end
         
+        function Y = reshapeToVector(obj, y)
+            if obj.complex
+                Y = reshapeToVector@Domain(obj, y);
+            else
+                Y = reshape(y, prod(obj.shape)/2, []);
+            end
+        end
+        
+        function y = reshapeToDomain(obj, Y)
+            if obj.complex
+                y = reshapeToDomain@Domain(obj, Y);
+            else
+                if obj.dimension == 1
+                    y = reshape(Y, [obj.shape(1)/2, numel(Y) / obj.shape(1)]);
+                else
+                    y = reshape(Y, [obj.shape(1)/2, obj.shape(2:end), numel(Y) / prod(obj.shape) * 2]);
+                end
+            end
+        end
+        
         function dyhat = diff(obj, yhat, degree)
             dyhat = suppress(obj, yhat);
             
-            dyhat = obj.diffMat(degree) .* dyhat;
+            dyhat = reshapeToVector(obj, dyhat);
+            
+            dyhat = obj.diffMat(degree) * dyhat;
+            
+            dyhat = reshapeToDomain(obj, dyhat);
         end
         
         function D = diffMat(obj, degree)
@@ -174,10 +198,20 @@ classdef PSDomain < Domain
         
         function f = wavenumberMultiplicand(obj, degree)
             if obj.dimension == 1
-                f = (1i * obj.wavenumber{1}).^degree;
+                A = (1i * obj.wavenumber{1}).^degree;
+                f = spdiags(A,0,prod(obj.shape),prod(obj.shape));
             elseif obj.dimension == 2
-                f = ((1i*obj.wavenumber{1}).^degree(1) * ...
+                A = ((1i*obj.wavenumber{1}).^degree(1) * ...
                     (1i*obj.wavenumber{2}').^degree(2));
+                A = reshapeToVector(obj, A);
+                
+                if obj.complex
+                    m = prod(obj.shape);
+                else
+                    m = prod(obj.shape)/2;
+                end
+                
+                f = spdiags(A,0,m,m);
             else
                 error("diff not defined for higher dimensions.")
             end
