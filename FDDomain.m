@@ -3,15 +3,20 @@ classdef FDDomain < Domain
         D
         diffDegrees
         accuracy
+        direction
     end
 
     methods
-        function obj = FDDomain(x, diffDegrees, accuracy)
+        function obj = FDDomain(x, diffDegrees, accuracy, direction)
+            if nargin < 4, direction = "central"; end
+            
             obj = obj@Domain(x);
-
+            
+            obj.direction = direction;
             obj.diffDegrees = diffDegrees;
             obj.accuracy = accuracy;
             obj.D = initialiseDiffMatrices(obj, obj.diffDegrees, obj.accuracy);
+            
         end
 
         function dy = diff(obj, y, degree)
@@ -42,13 +47,20 @@ classdef FDDomain < Domain
             for j = 1:size(diffDegrees, 2)
                 D{j} = 1;
                 for k = 1:obj.dimension
-                    Dmat = constructMatrix(obj.x{k}, diffDegrees(k, j), accuracy);
+                    Dmat = constructMatrix(obj, obj.x{k}, diffDegrees(k, j), accuracy);
                     D{j} = kron(Dmat, D{j});
                 end
             end
 
-            function mat = constructMatrix(x, degree, accuracy)
-                [stencil, coefficients] = centredScheme(degree, accuracy);
+            function mat = constructMatrix(obj, x, degree, accuracy)
+                if obj.direction == "central"
+                    [stencil, coefficients] = centredScheme(degree, accuracy);
+                elseif obj.direction == "forward"
+                    [stencil, coefficients] = forwardScheme(degree, accuracy);
+                else
+                    error('Unimplemented direction: %s, use central or forward',...
+                        obj.direction);
+                end
                 xLength = length(x);
                 dx = x(2) - x(1);
                 B = repmat(coefficients*dx.^(-degree), xLength, 1);
@@ -60,6 +72,15 @@ classdef FDDomain < Domain
                 stencil = -stencilLength:stencilLength;
                 ex = (0:2 * stencilLength)';
                 S = repmat(stencil, stencilLength*2+1, 1).^ex;
+                del = factorial(degree) * (ex == degree);
+                coefficients = (S \ del)';
+            end
+            
+            function [stencil, coefficients] = forwardScheme(degree, accuracy)
+                stencilLength = degree + accuracy;
+                stencil = 0:stencilLength - 1;
+                ex = (0:stencilLength-1)';
+                S = repmat(stencil, stencilLength, 1).^ex;
                 del = factorial(degree) * (ex == degree);
                 coefficients = (S \ del)';
             end

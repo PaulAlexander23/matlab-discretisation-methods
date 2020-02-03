@@ -1,4 +1,4 @@
-function tests = tests()
+function tests = testFDDomain()
     tests = functiontests(localfunctions);
 end
 
@@ -44,6 +44,15 @@ function testEvaluatingFunction1dFiniteDifference(testCase)
     
     verifySize(testCase, actual, [2^8, 1])
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
+function testEvaluatingFunction1dFiniteDifferenceForwardDifference(testCase)
+    domain = FDDomain(setup1dX(2^8), [1, 2], 2, 'forward');
+    
+    [actual, expected] = function1d(domain);
+    
+    verifySize(testCase, actual, [2^8, 1])
+    verifyEqual(testCase,actual,expected,'RelTol',1e-2,'AbsTol',1e-3)
 end
 
 function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
