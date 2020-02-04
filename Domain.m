@@ -4,7 +4,7 @@ classdef Domain
         shape
         dimension
     end
-
+    
     methods
         function obj = Domain(x)
             obj.x = x;
@@ -17,17 +17,34 @@ classdef Domain
                 obj.x{dim} = reshape(obj.x{dim},xShapes(dim,:));
             end
         end
-
-        function Y = reshapeToVector(obj, y)
-            Y = reshape(y, prod(obj.shape), []);
-        end
-
-        function y = reshapeToDomain(obj, Y)
-            if obj.dimension == 1
-                y = reshape(Y, [obj.shape(1), numel(Y) / obj.shape(1)]);
+        
+        function [Y, shapeMultiplier] = reshapeToVector(obj, y)
+            
+            shapeMultiplier = size(y)./obj.shape;
+            
+            if shapeMultiplier(1) == 1
+                Y = reshape(y, prod(obj.shape), []);
             else
-                y = reshape(Y, [obj.shape, numel(Y) / prod(obj.shape)]);
+                ycell = mat2cell(y, ...
+                    repmat(obj.shape(1),1,shapeMultiplier(1)), ...
+                    repmat(obj.shape(2),1,shapeMultiplier(2)));
+            
+                Ycell = cellfun(@(y)reshape(y, prod(obj.shape),[]), ycell, ...
+                    'UniformOutput', false);
+            
+                Y = cell2mat(Ycell);
             end
+        end
+        
+        function [y, shapeMultiplier] = reshapeToDomain(obj, Y)
+            
+            shapeMultiplier = size(Y)./[prod(obj.shape),1];
+            horizontalMultiplier = ones(1,length(obj.shape));
+            horizontalMultiplier(2) = shapeMultiplier(2);
+            
+            y = squeeze(num2cell(reshape(Y, [obj.shape .* horizontalMultiplier,...
+                shapeMultiplier(1)]),[1,2]));
+            y = cat(1, y{:});
         end
         
         function fq = interp(obj, x, f)

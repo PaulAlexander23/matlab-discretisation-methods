@@ -51,6 +51,28 @@ function testDomain2dReshapeToVector(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
+function testDomain2dReshapeToVectorLargerHorizontal(testCase)
+    domain = Domain(setup2dX(2^8));
+    f = domain.x{1} + domain.x{2};
+    f = [f, 2*f];
+    
+    actual = domain.reshapeToVector(f);
+    expected = reshape(f,[],2);
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testDomain2dReshapeToVectorLargerVertical(testCase)
+    domain = Domain(setup2dX(2^8));
+    f = domain.x{1} + domain.x{2};
+    f2 = [f; 2*f];
+    
+    actual = domain.reshapeToVector(f2);
+    expected = [reshape(f,[],1);2*reshape(f,[],1)];
+    
+    verifyEqual(testCase, actual, expected);
+end
+
 function testDomain1dReshapeToDomain(testCase)
     domain = Domain(setup1dX(2^8));
     f = domain.x{1};
@@ -62,6 +84,30 @@ function testDomain1dReshapeToDomain(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
+function testDomain1dReshapeToDomainLargerHorizontal(testCase)
+    domain = Domain(setup1dX(2^8));
+    f = domain.x{1};
+    fVec = reshape(f,[],1);
+    fVec = [fVec, 2*fVec];
+    
+    actual = domain.reshapeToDomain(fVec);
+    expected = [f, 2*f];
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testDomain1dReshapeToDomainLargerVertical(testCase)
+    domain = Domain(setup1dX(2^8));
+    f = domain.x{1};
+    fVec = reshape(f,[],1);
+    fVec = [fVec; 2*fVec];
+    
+    actual = domain.reshapeToDomain(fVec);
+    expected = [f; 2*f];
+    
+    verifyEqual(testCase, actual, expected);
+end
+
 function testDomain2dReshapeToDomain(testCase)
     domain = Domain(setup2dX(2^8));
     f = domain.x{1} + domain.x{2};
@@ -69,6 +115,45 @@ function testDomain2dReshapeToDomain(testCase)
     
     actual = domain.reshapeToDomain(fVec);
     expected = f;
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testDomain2dReshapeToDomainLargerHorizontal(testCase)
+    domain = Domain(setup2dX(2^8));
+    f = domain.x{1} + domain.x{2};
+%     fVec = domain.reshapeToVector(f);
+    fVec = reshape(f,[],1);
+    fVec = [fVec, 2*fVec];
+    
+    actual = domain.reshapeToDomain(fVec);
+    expected = [f, 2*f];
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testDomain2dReshapeToDomainLargerVertical(testCase)
+    domain = Domain(setup2dX(2^8));
+    f = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+%     fVec = domain.reshapeToVector(f);
+    fVec = reshape(f,[],1);
+    fVec = [fVec; 2*fVec];
+    
+    expected = [f; 2*f];
+    actual = domain.reshapeToDomain(fVec);
+    
+    
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testDomain2dReshapeLargerVertical(testCase)
+    domain = Domain(setup2dX(2^8));
+    expected = [cos(domain.x{1}) + exp(domain.x{2}); cosh(domain.x{1}+domain.x{2})];
+    
+    fVec = domain.reshapeToVector(expected);
+    
+    actual = domain.reshapeToDomain(fVec);
     
     verifyEqual(testCase, actual, expected);
 end
