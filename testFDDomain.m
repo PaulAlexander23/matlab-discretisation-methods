@@ -15,6 +15,19 @@ function test1dFiniteDifferenceDiff(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
+function test1dFiniteDifferenceDiffPair(testCase)
+    domain = FDDomain(setup1dX(2^8), 1, 2);
+    Y = cos(2*pi*domain.x{1});
+    Y = [Y;2*Y];
+    degree = 1;
+    
+    actual = domain.diff(Y, degree);
+    
+    expected = [-2*pi*sin(2*pi*domain.x{1});-4*pi*sin(2*pi*domain.x{1})];
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
 function test1dFiniteDifferenceGetDiffMatrix(testCase)
     domain = FDDomain(setup1dX(2^8), 1, 2);
     degree = 1;
@@ -24,6 +37,57 @@ function test1dFiniteDifferenceGetDiffMatrix(testCase)
     expectedSize = [2^8, 2^8];
     
     verifySize(testCase, actual, expectedSize);
+end
+
+function test2dFiniteDifferenceDiff(testCase)
+    domain = FDDomain(setup2dX(2^8), [1,0;0,1]', 2);
+    Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    
+    expected = -2*pi*sin(2*pi*domain.x{1}) + 0*domain.x{2};
+    actual = domain.diff(Y, [1,0]');
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+    
+    expected = -2*pi*sin(2*pi*domain.x{2}) + 0*domain.x{1};
+    actual = domain.diff(Y, [0,1]');
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
+function test2dFiniteDifferenceDiffPair(testCase)
+    domain = FDDomain(setup2dX(2^8), [1,0;0,1]', 2);
+    Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    Y = [Y; 2*Y];
+    
+    expected = [-2*pi*sin(2*pi*domain.x{1}) + 0*domain.x{2};
+        -4*pi*sin(2*pi*domain.x{1}) + 0*domain.x{2}];
+    actual = domain.diff(Y, [1,0]');
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+
+    expected = [-2*pi*sin(2*pi*domain.x{2}) + 0*domain.x{1}; ...
+        -4*pi*sin(2*pi*domain.x{2}) + 0*domain.x{1}];
+    actual = domain.diff(Y, [0,1]');
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
+function test2dFiniteDifferenceDiffVector(testCase)
+    domain = FDDomain(setup2dX(2^8), [1,0;0,1]', 2);
+    Y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    Y = [Y, 2*Y];
+    
+    expected = [-2*pi*sin(2*pi*domain.x{1}) + 0*domain.x{2},...
+        -4*pi*sin(2*pi*domain.x{1}) + 0*domain.x{2}];
+    actual = domain.diff(Y, [1,0]');
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+    
+    expected = [-2*pi*sin(2*pi*domain.x{2}) + 0*domain.x{1},...
+        -4*pi*sin(2*pi*domain.x{2}) + 0*domain.x{1}];
+    actual = domain.diff(Y, [0,1]');
+    
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
 function test2dFiniteDifferenceGetDiffMatrix(testCase)
@@ -92,7 +156,17 @@ function testEvaluatingFunction2dVectorisedFiniteDifference(testCase)
     
     [actual, expected] = function2dVectorised(domain);
     
-    verifySize(testCase, actual, [2^8, 2^8, 2])
+    verifySize(testCase, actual, [2^8, 2^8 * 2])
+    verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
+end
+
+function testEvaluatingFunction2dPairFiniteDifference(testCase)
+    problemDeg = [1,0;0,1]';
+    domain = FDDomain(setup2dX(2^8), problemDeg, 2);
+    
+    [actual, expected] = function2dPair(domain);
+    
+    verifySize(testCase, actual, [2^8 * 2, 2^8])
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
@@ -134,7 +208,21 @@ function [actual, expected] = function2dVectorised(domain)
     dy2 = domain.diff([y, y2], [0, 1]');
 
     actual = dy1 / 2 / pi + dy2 / 2 / pi;
-    expected = cat(3, ...
+    expected = cat(2, ...
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}), ...
+        -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}));
+end
+
+function [actual, expected] = function2dPair(domain)
+    y = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    z = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    u = [y;z];
+    
+    dux = domain.diff(u, [1, 0]');
+    duy = domain.diff(u, [0, 1]');
+
+    actual = dux / 2 / pi + duy / 2 / pi;
+    expected = cat(1, ...
         -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}), ...
         -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}));
 end

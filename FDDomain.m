@@ -20,9 +20,12 @@ classdef FDDomain < Domain
         end
 
         function dy = diff(obj, y, degree)
-            dy = reshapeToVector(obj, y);
             
-            dy = obj.diffMat(degree) * dy;
+            [dy, sm] = reshapeToVector(obj, y);
+            
+            largeD = kron(speye(sm(1)),obj.diffMat(degree));
+            
+            dy = largeD * dy;
             
             dy = reshapeToDomain(obj, dy);
         end
