@@ -7,14 +7,21 @@ classdef Domain
     
     methods
         function obj = Domain(x)
-            obj.x = x;
-            obj.dimension = length(obj.x);
-            obj.shape = reshape(cellfun(@length,obj.x), 1, []);
-            if length(obj.shape) == 1, obj.shape = [obj.shape, 1]; end
-            
+            obj.dimension = length(x);
+            obj.shape = obj.calculateShape(x);
+            obj.x = obj.reshapeIndependentVariables(x);
+        end
+        
+        function shape = calculateShape(~, x)
+            shape = reshape(cellfun(@length, x), 1, []);
+            if length(shape) == 1, shape = [shape, 1]; end
+        end
+
+        function y = reshapeIndependentVariables(obj,x)
+            y = cell(obj.dimension, 1);
             xShapes = ones(obj.dimension) + eye(obj.dimension) .* (obj.shape - 1);
             for dim = 1:obj.dimension
-                obj.x{dim} = reshape(obj.x{dim},xShapes(dim,:));
+                y{dim} = reshape(x{dim},xShapes(dim,:));
             end
         end
         
