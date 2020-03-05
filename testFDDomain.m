@@ -2,9 +2,8 @@ function tests = testFDDomain()
     tests = functiontests(localfunctions);
 end
 
-%% Finite Difference
 function test1dFiniteDifferenceDiff(testCase)
-    domain = FDDomain(setup1dX(2^8), 1, 2);
+    domain = FDDomain({linspace(1/256, 1, 256)'}, 1, 2);
     Y = cos(2*pi*domain.x{1});
     degree = 1;
     
@@ -16,7 +15,7 @@ function test1dFiniteDifferenceDiff(testCase)
 end
 
 function test1dFiniteDifferenceDiffPair(testCase)
-    domain = FDDomain(setup1dX(2^8), 1, 2);
+    domain = FDDomain({linspace(1/256, 1, 256)'}, 1, 2);
     Y = cos(2*pi*domain.x{1});
     Y = [Y;2*Y];
     degree = 1;
@@ -29,7 +28,7 @@ function test1dFiniteDifferenceDiffPair(testCase)
 end
 
 function test1dFiniteDifferenceGetDiffMatrix(testCase)
-    domain = FDDomain(setup1dX(2^8), 1, 2);
+    domain = FDDomain({linspace(1/256, 1, 256)'}, 1, 2);
     degree = 1;
     
     actual = domain.diffMat(degree);
@@ -102,7 +101,7 @@ function test2dFiniteDifferenceGetDiffMatrix(testCase)
 end
 
 function testEvaluatingFunction1dFiniteDifference(testCase)
-    domain = FDDomain(setup1dX(2^8), [1, 2], 2);
+    domain = FDDomain({linspace(1/256, 1, 256)'}, [1, 2], 2);
     
     [actual, expected] = function1d(domain);
     
@@ -111,7 +110,7 @@ function testEvaluatingFunction1dFiniteDifference(testCase)
 end
 
 function testEvaluatingFunction1dFiniteDifferenceForwardDifference(testCase)
-    domain = FDDomain(setup1dX(2^8), [1, 2], 2, 'forward');
+    domain = FDDomain({linspace(1/256, 1, 256)'}, [1, 2], 2, 'forward');
     
     [actual, expected] = function1d(domain);
     
@@ -120,7 +119,7 @@ function testEvaluatingFunction1dFiniteDifferenceForwardDifference(testCase)
 end
 
 function testEvaluatingFunction1dVectorisedFiniteDifference(testCase)
-    domain = FDDomain(setup1dX(2^8), [1, 2], 2);
+    domain = FDDomain({linspace(1/256, 1, 256)'}, [1, 2], 2);
     
     [actual, expected] = function1dVectorised(domain);
     
@@ -225,10 +224,6 @@ function [actual, expected] = function2dPair(domain)
     expected = cat(1, ...
         -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}), ...
         -sin(2*pi*domain.x{1})-sin(2*pi*domain.x{2}));
-end
-
-function x = setup1dX(n)
-    x = {linspace(1/n, 1, n)'};
 end
 
 function x = setup2dX(m,n)

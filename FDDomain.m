@@ -16,15 +16,12 @@ classdef FDDomain < Domain
             obj.diffDegrees = diffDegrees;
             obj.accuracy = accuracy;
             obj.D = initialiseDiffMatrices(obj, obj.diffDegrees, obj.accuracy);
-            
         end
 
         function dy = diff(obj, y, degree)
-            
             dy = reshapeToVector(obj, y);
 
             Dx = obj.diffMat(degree);
-
             largeD = kron(speye(size(dy,1)/size(Dx,1)), Dx);
             
             dy = largeD * dy;
@@ -37,10 +34,9 @@ classdef FDDomain < Domain
             D = obj.D{index};
         end
         
-        function w = multiply(obj, u, v, powers)
-            if nargin < 4
-                powers = [1, 1];
-            end
+        function w = multiply(~, u, v, powers)
+            if nargin < 4, powers = [1, 1]; end
+
             w = u.^powers(1) .* v.^powers(2);
         end
     end
