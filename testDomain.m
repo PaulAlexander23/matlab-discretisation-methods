@@ -4,31 +4,39 @@ end
 
 %% Domain
 function testDomain1dConstructor(testCase)
-    domain = setup1DDomain();
+    n = 256;
+    x = {linspace(1/n, 1, n)'};
+    domain = Domain(x);
 
-    expectedX = {linspace(1/256,1,256)'};
-    expectedShape = [2^8, 1];
-
-    actualX = domain.x;
-    actualShape = domain.shape;
-
-    verifyEqual(testCase, actualX, expectedX)
-    verifyEqual(testCase, actualShape, expectedShape)
+    verifyEqual(testCase, domain.x, {linspace(1/256,1,256)'})
+    verifyEqual(testCase, domain.shape, [2^8, 1])
     verifyEqual(testCase, domain.dimension, 1)
 end
 
 function testDomain2dConstructor(testCase)
-    domain = setup2DDomain();
+    m = 256;
+    n = 256;
+    x = {linspace(1/m,1,m)';linspace(1/n,1,n)};
+    domain = Domain(x);
 
-    actualX = domain.x;
-    actualShape = domain.shape;
-
-    expectedX = {linspace(1/256,1,256)';linspace(1/256,1,256)};
-    expectedShape = [2^8, 2^8];
-
-    verifyEqual(testCase, actualX, expectedX)
-    verifyEqual(testCase, actualShape, expectedShape)
+    verifyEqual(testCase, domain.x, {linspace(1/m,1,m)';linspace(1/n,1,n)})
+    verifyEqual(testCase, domain.shape, [m, n])
     verifyEqual(testCase, domain.dimension, 2)
+end
+
+function testDomain3dConstructor(testCase)
+    l = 256;
+    m = 256;
+    n = 256;
+    x = {linspace(1/l,1,l);linspace(1/m,1,m);linspace(1/n,1,n)};
+    domain = Domain(x);
+
+    x3 = zeros(1,1,n);
+    x3(1,1,:) = linspace(1/n,1,n);
+
+    verifyEqual(testCase, domain.x, {linspace(1/l,1,l)';linspace(1/m,1,m);x3});
+    verifyEqual(testCase, domain.shape, [l, m, n]);
+    verifyEqual(testCase, domain.dimension, 3);
 end
 
 function testDomain1dReshapeToVector(testCase)
@@ -163,7 +171,7 @@ function testDomain1dInterpolation(testCase)
     x = {linspace(0,1,100)};
     f = cos(2*pi*x{1});
 
-    actual = domain.interp(x,f);
+    actual = domain.interp(x,f,'spline');
     expected = cos(2*pi*domain.x{1});
 
     verifyEqual(testCase, actual, expected, 'AbsTol', 1e-9, 'RelTol', 1e-6)
@@ -174,7 +182,7 @@ function testDomain2dInterpolation(testCase)
     x = {linspace(0,1,100)', linspace(0,1,100)'};
     f = cos(2*pi*x{1}) + cos(2*pi*x{2}');
 
-    actual = domain.interp(x,f);
+    actual = domain.interp(x,f,'spline');
     expected = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
 
     verifyEqual(testCase, actual, expected, 'AbsTol', 1e-6, 'RelTol', 1e-4)
