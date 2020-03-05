@@ -1,6 +1,7 @@
 classdef PSDomain < Domain
     properties
         length
+        fourierDomain
         wavenumber
         suppression
         antialiasing
@@ -21,26 +22,15 @@ classdef PSDomain < Domain
             obj.scaling = 2/prod(obj.shape);
             obj.complex = complex;
             obj.wavenumber = calculateWavenumber(obj);
+            obj.fourierDomain = Domain(obj.wavenumber);
         end
         
         function Y = reshapeToVector(obj, y)
-            if obj.complex
-                Y = reshapeToVector@Domain(obj, y);
-            else
-                Y = reshape(y, prod(obj.shape)/2, []);
-            end
+            Y = obj.fourierDomain.reshapeToVector(y);
         end
         
         function y = reshapeToDomain(obj, Y)
-            if obj.complex
-                y = reshapeToDomain@Domain(obj, Y);
-            else
-                if obj.dimension == 1
-                    y = reshape(Y, [obj.shape(1)/2, numel(Y) / obj.shape(1)]);
-                else
-                    y = reshape(Y, [obj.shape(1)/2, obj.shape(2:end), numel(Y) / prod(obj.shape) * 2]);
-                end
-            end
+            y = obj.fourierDomain.reshapeToDomain(Y);
         end
         
         function dyhat = diff(obj, yhat, degree)
