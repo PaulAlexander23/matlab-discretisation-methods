@@ -13,16 +13,16 @@ classdef Domain
         end
 
         function Y = reshapeToVector(obj, y)
-            ycell = obj.extractShapeCells(y, obj.shape);
+            ycell = obj.extractSurfacesAsCell(y);
 
-            Ycell = cellfun(@(y) reshape(y, prod(obj.shape),[]), ycell, ...
+            Ycell = cellfun(@(y) reshape(y, [prod(obj.shape), 1]), ycell, ...
                 'UniformOutput', false);
 
             Y = cell2mat(Ycell);
         end
 
         function y = reshapeToDomain(obj, Y)
-            Ycell = obj.extractShapeCells(Y, [prod(obj.shape), 1]);
+            Ycell = obj.extractVectorAsCell(Y);
 
             ycell = cellfun(@(Y) reshape(Y, obj.shape), Ycell, ...
                 'UniformOutput', false);
@@ -34,6 +34,14 @@ classdef Domain
             if nargin < 4; method = 'linear'; end
 
             fq = interpn(x{:}, f, obj.x{:}, method);
+        end
+
+        function ycell = extractSurfacesAsCell(obj, y)
+            ycell = obj.extractShapeAsCell(y, obj.shape);
+        end
+
+        function Ycell = extractVectorAsCell(obj, Y)
+            Ycell = obj.extractShapeAsCell(Y, [prod(obj.shape), 1]);
         end
     end
 
@@ -53,7 +61,7 @@ classdef Domain
             end
         end
 
-        function ycell = extractShapeCells(~, y, shape)
+        function ycell = extractShapeAsCell(~, y, shape)
             shapeMultiplier = size(y)./shape;
             ycell = mat2cell(y, ...
                 repmat(shape(1), 1, shapeMultiplier(1)), ...

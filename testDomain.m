@@ -188,6 +188,39 @@ function testDomain2dInterpolation(testCase)
     verifyEqual(testCase, actual, expected, 'AbsTol', 1e-6, 'RelTol', 1e-4)
 end
 
+function testExtractSurfacesAsCell1D(testCase)
+    domain = Domain({linspace(0,1)});
+    testSurface = kron([1,2;3,4],domain.x{1});
+
+    expected = {domain.x{1}, 2*domain.x{1}; 3*domain.x{1}, 4*domain.x{1}};
+    actual = domain.extractSurfacesAsCell(testSurface);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testExtractSurfacesAsCell2D(testCase)
+    domain = Domain({linspace(0,1),linspace(0,1)});
+    y = domain.x{1} + domain.x{2};
+    testSurface = kron([1,2;3,4], y);
+
+    expected = {y, 2*y; 3*y, 4*y};
+    actual = domain.extractSurfacesAsCell(testSurface);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testExtractVectorAsCell(testCase)
+    domain = Domain({linspace(0,1),linspace(0,1)});
+    y = domain.x{1} + domain.x{2};
+    Y = domain.reshapeToVector(y);
+    testSurface = kron([1,2;3,4], y);
+    testVector = domain.reshapeToVector(testSurface);
+
+    expected = {Y, 2*Y; 3*Y, 4*Y};
+    actual = domain.extractVectorAsCell(testVector);
+
+    verifyEqual(testCase, actual, expected);
+end
 
 %% Functions
 function [actual, expected] = function1d(domain)
