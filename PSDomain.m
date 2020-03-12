@@ -33,14 +33,24 @@ classdef PSDomain < Domain
             y = obj.fourierDomain.reshapeToDomain(Y);
         end
         
+        function f = fft(obj, x)
+            xcell = obj.extractSurfacesAsCell(x);
+            fcell = obj.fftCell(xcell);
+            f = cell2mat(fcell);
+            
+            f = suppress(obj, f);
+        end
+        
+        function x = ifft(obj, f)
+            fcell = obj.fourierDomain.extractSurfacesAsCell(f);
+            xcell = obj.ifftCell(fcell);
+            x = cell2mat(xcell);
+        end
+        
         function dyhat = diff(obj, yhat, degree)
-            dyhat = suppress(obj, yhat);
-            
-            dyhat = reshapeToVector(obj, dyhat);
-            
-            dyhat = obj.diffMat(degree) * dyhat;
-            
-            dyhat = reshapeToDomain(obj, dyhat);
+            yhatCell = obj.fourierDomain.extractSurfacesAsCell(yhat);
+            dyhatCell = obj.diffCell(yhatCell, degree);
+            dyhat = cell2mat(dyhatCell);
         end
         
         function D = diffMat(obj, degree)
@@ -57,49 +67,17 @@ classdef PSDomain < Domain
                 vhat = obj.zeropad(vhat,ratio) * ratio.^obj.dimension;
             end
             
-            u = obj.ifft(uhat);
-            v = obj.ifft(vhat);
-            
+            u = cell2mat(obj.ifftCell({uhat}));
+            v = cell2mat(obj.ifftCell({vhat}));
+
             w = u.^powers(1) .* v.^powers(2);
             
-            what = obj.fft(w);
+            what = cell2mat(obj.fftCell({w}));
             
             if obj.antialiasing
                 what = obj.trunc(what / ratio.^obj.dimension, ...
                     1/ratio);
             end
-        end
-        
-        function f = fft(obj, x)
-            if obj.dimension == 1
-                f = fft(x);
-            elseif obj.dimension == 2
-                f = fft2(x);
-            else
-                error('fft in 3 dimensions and higher is not defined yet.')
-            end
-            
-            if ~obj.complex
-                f = f(1:end/2,:,:);
-            end
-            
-            f = f * obj.scaling;
-            f = suppress(obj, f);
-        end
-        
-        function x = ifft(obj, f)
-            if ~obj.complex
-                f = [f; zeros(size(f))];
-            end
-            
-            if obj.dimension == 1
-                x = ifft(f, 'symmetric');
-            elseif obj.dimension == 2
-                x = ifft2(f, 'symmetric');
-            else
-                error('ifft in 3 dimensions and higher is not defined yet.')
-            end
-            x = x / obj.scaling;
         end
         
         function uhatpad = zeropad(obj, uhat, ratio)
@@ -125,11 +103,7 @@ classdef PSDomain < Domain
 
     methods(Access = private)
         function L = calculateLength(obj)
-            if obj.x{1}(1) ~= 0
-                L = cellfun(@(x) x(end), obj.x);
-            else
-                L = cellfun(@(x) x(end)+x(1), obj.x);
-            end
+            L = cellfun(@(x) 2*x(end) - x(end-1) - x(1), obj.x);
         end
 
         function k = calculateWavenumber(obj)
@@ -141,15 +115,62 @@ classdef PSDomain < Domain
                     w = [0:obj.shape(d)/2 - 1, 0, 1 - obj.shape(d)/2:-1]';
                 end
                 
-                k{d} = w * ...
-                    2*pi/obj.length(d);
+                k{d} = w * (2*pi/obj.length(d));
             end
         end
+
+        function f = removeSymmetricConjugate(~, f)
+            f = f(1:end/2,:,:);
+        end
         
+        function f = addSymmetricConjugate(~, f)
+            f = [f; zeros(size(f))];
+        end
+
         function dyhat = suppress(obj, dyhat)
             dyhat(abs(dyhat)<obj.suppression * max(max(abs(dyhat)))) = 0;
         end
         
+        function fcell = fftCell(obj, xcell)
+            fcell = cellfun(@(x)obj.fftLocal(x), xcell, 'UniformOutput', false);
+        end
+
+        function f = fftLocal(obj, x)
+            f = fftn(x) * obj.scaling;
+
+            if ~obj.complex
+                f = obj.removeSymmetricConjugate(f);
+            end
+        end
+
+        function xcell = ifftCell(obj, fcell)
+            xcell = cellfun(@(f) obj.ifftLocal(f), fcell, 'UniformOutput', false);
+        end
+
+        function x = ifftLocal(obj, f)
+            if obj.complex
+                x = ifftn(f) / obj.scaling;
+            else
+                f = obj.addSymmetricConjugate(f);
+                x = ifftn(f, 'symmetric') / obj.scaling;
+            end
+            
+        end
+
+        function dycell = diffCell(obj, ycell, degree)
+            dycell = cellfun(@(y) obj.diffLocal(y, degree), ycell, 'UniformOutput', false);
+        end
+
+        function dyhat = diffLocal(obj, yhat, degree)
+            dyhat = obj.suppress(yhat);
+            
+            dyhat = obj.reshapeToVector(dyhat);
+            
+            dyhat = obj.diffMat(degree) * dyhat;
+            
+            dyhat = obj.reshapeToDomain(dyhat);
+        end
+
         function out = filterOutShortWaves(obj, in, ratioKeptToAll)
             ratio = ratioKeptToAll/2;
             if obj.dimension == 1
@@ -187,35 +208,33 @@ classdef PSDomain < Domain
         end
         
         function f = wavenumberMultiplicand(obj, degree)
+            if obj.complex
+                m = prod(obj.shape);
+            else
+                m = prod(obj.shape)/2;
+            end
             if obj.dimension == 1
                 A = (1i * obj.wavenumber{1}).^degree;
-                f = spdiags(A,0,prod(obj.shape),prod(obj.shape));
             elseif obj.dimension == 2
                 A = ((1i*obj.wavenumber{1}).^degree(1) * ...
                     (1i*obj.wavenumber{2}').^degree(2));
                 A = reshapeToVector(obj, A);
-                
-                if obj.complex
-                    m = prod(obj.shape);
-                else
-                    m = prod(obj.shape)/2;
-                end
-                
-                f = spdiags(A,0,m,m);
             else
                 error("diff not defined for higher dimensions.")
             end
+            f = spdiags(A,0,m,m);
         end
         
         function upad = zeropad1d(obj, u, ratio, dimension)
             if nargin < 4, dimension = 1; end
             
             s = size(u);
-            upad = zeros([s(1) * ratio, s(2:end)]);
+            N = s(1) * ratio;
+            upad = zeros([N, s(2:end)]);
             if ~obj.complex && dimension == 1
                 ind = 1:s(1);
             else
-                ind = [1:s(1)/2, s(1) * (ratio - 0.5) + 1:s(1) * ratio];
+                ind = [1:s(1)/2, N - s(1)/2 + 1:N];
             end
             upad(ind,:,:) = u;
         end
@@ -227,7 +246,7 @@ classdef PSDomain < Domain
             if ~obj.complex && dimension == 1
                 ind = 1:ratio * N;
             else
-                ind = [1:ratio * N/2, N * (1 - ratio/2) + 1:N];
+                ind = [1:ratio * N/2, N/2 + 1, N - ratio * N/2 + 2:N];
             end
             u = upad(ind,:,:);
         end
