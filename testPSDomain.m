@@ -112,7 +112,7 @@ function testFFT1DReal(testCase)
     end
 end
 
-function testFFTMultipleSurfaces(testCase)
+function testFFT2DMultipleSurfaces(testCase)
     N = 128;
     L = 2*pi;
     domain = PSDomain({linspace(L/N,L,N),linspace(L/N,L,N)}, false, true);
@@ -126,7 +126,7 @@ function testFFTMultipleSurfaces(testCase)
     verifyEqual(testCase, actual, expected, 'RelTol', 2*eps);
 end
 
-function testFFTMultipleSurfacesReal(testCase)
+function testFFT2DMultipleSurfacesReal(testCase)
     N = 128;
     L = 2*pi;
     domain = PSDomain({linspace(L/N,L,N),linspace(L/N,L,N)}, false, false);
@@ -403,6 +403,22 @@ function testZeropad1D(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
+function testZeropad1DReal(testCase)
+    N = 32;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/N, L, N)}, false, false);
+    
+    f = domain.x{1};
+    ratio = 3/2;
+    
+    actual = domain.zeropad(f, ratio);
+    
+    expected = zeros(N * ratio,1);
+    expected(1:N) = f;
+    
+    verifyEqual(testCase, actual, expected);
+end
+
 function testZeropad2D(testCase)
     M = 64;
     N = 32;
@@ -419,22 +435,6 @@ function testZeropad2D(testCase)
     expected(1:M/2,ratio*N-N/2+1:ratio*N) = f(1:M/2,1+N/2:end);
     expected(ratio*M-M/2+1:ratio*M,1:N/2) = f(1+M/2:end,1:N/2);
     expected(ratio*M-M/2+1:ratio*M,ratio*N-N/2+1:ratio*N) = f(1+M/2:end,1+N/2:end);
-    
-    verifyEqual(testCase, actual, expected);
-end
-
-function testZeropad1DReal(testCase)
-    N = 32;
-    L = 2*pi;
-    domain = PSDomain({linspace(L/N, L, N)}, false, false);
-    
-    f = domain.x{1};
-    ratio = 3/2;
-    
-    actual = domain.zeropad(f, ratio);
-    
-    expected = zeros(N * ratio,1);
-    expected(1:N) = f;
     
     verifyEqual(testCase, actual, expected);
 end
@@ -469,19 +469,6 @@ function testTrunc1D(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
-function testTrunc2D(testCase)
-    N = 3*32;
-    domain = PSDomain(setup2dX(N));
-    
-    f = repmat([0:N/2-1,0,-N/2+1:-1]', 1, N);
-    ratio = 2/3;
-    
-    expected = repmat([0:ratio*N/2-1,0,-ratio*N/2+1:-1]', 1, N*ratio);
-    actual = domain.trunc(f, ratio);
-    
-    verifyEqual(testCase, actual, expected);
-end
-
 function testTrunc1DReal(testCase)
     N = 3*32;
     domain = PSDomain(setup1dX(N), false, false);
@@ -492,6 +479,19 @@ function testTrunc1DReal(testCase)
     actual = domain.trunc(f, ratio);
     
     expected = (0:N*ratio-1)';
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testTrunc2D(testCase)
+    N = 3*32;
+    domain = PSDomain(setup2dX(N));
+    
+    f = repmat([0:N/2-1,0,-N/2+1:-1]', 1, N);
+    ratio = 2/3;
+    
+    expected = repmat([0:ratio*N/2-1,0,-ratio*N/2+1:-1]', 1, N*ratio);
+    actual = domain.trunc(f, ratio);
     
     verifyEqual(testCase, actual, expected);
 end
