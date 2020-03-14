@@ -1,12 +1,15 @@
 classdef PSDomain < Domain
     properties
         length
-        fourierDomain
         wavenumber
         suppression
         antialiasing
         scaling
         complex
+    end
+
+    properties (Access = private)
+        fourierDomain
     end
 
     methods
@@ -60,44 +63,10 @@ classdef PSDomain < Domain
         function what = multiply(obj, uhat, vhat, powers)
             if nargin < 4, powers = [1, 1]; end
             
-            if obj.antialiasing
-                ratio = (sum(abs(powers)) + 1)/2;
-                
-                uhat = obj.zeropad(uhat,ratio) * ratio.^obj.dimension;
-                vhat = obj.zeropad(vhat,ratio) * ratio.^obj.dimension;
-            end
-            
-            u = cell2mat(obj.ifftCell({uhat}));
-            v = cell2mat(obj.ifftCell({vhat}));
-
-            w = u.^powers(1) .* v.^powers(2);
-            
-            what = cell2mat(obj.fftCell({w}));
-            
-            if obj.antialiasing
-                what = obj.trunc(what / ratio.^obj.dimension, ...
-                    1/ratio);
-            end
-        end
-        
-        function uhatpad = zeropad(obj, uhat, ratio)
-            if obj.dimension == 1
-                uhatpad = obj.zeropad1d(uhat,ratio);
-            elseif obj.dimension == 2
-                uhatpad = permute(obj.zeropad1d(permute(obj.zeropad1d(uhat,ratio),[2,1,3]),ratio,2),[2,1,3]);
-            else
-                error("zeropad not defined for higher dimensions.")
-            end
-        end
-        
-        function uhat = trunc(obj, uhatpad, ratio)
-            if obj.dimension == 1
-                uhat = obj.trunc1d(uhatpad,ratio);
-            elseif obj.dimension == 2
-                uhat = permute(obj.trunc1d(permute(obj.trunc1d(uhatpad,ratio),[2,1,3]),ratio,2),[2,1,3]);
-            else
-                error("trunc not defined for higher dimensions.")
-            end
+            uhatCell = obj.fourierDomain.extractSurfacesAsCell(uhat);
+            vhatCell = obj.fourierDomain.extractSurfacesAsCell(vhat);
+            whatCell = obj.multiplyCell(uhatCell, vhatCell, powers);
+            what = cell2mat(whatCell);
         end
     end
 
@@ -169,6 +138,58 @@ classdef PSDomain < Domain
             dyhat = obj.diffMat(degree) * dyhat;
             
             dyhat = obj.reshapeToDomain(dyhat);
+        end
+
+        function whatCell = multiplyCell(obj, uhatCell, vhatCell, powers)
+            [M, N] = size(uhatCell);
+            whatCell = cell(M, N);
+            for m = 1:M
+                for n = 1:N
+                    whatCell{m,n} = obj.multiplyLocal(uhatCell{m,n}, vhatCell{m,n}, powers);
+                end
+            end
+        end
+
+        function what = multiplyLocal(obj, uhat, vhat, powers)
+            if obj.antialiasing
+                ratio = (sum(abs(powers)) + 1)/2;
+
+                uhat = obj.zeropad(uhat,ratio) * ratio.^obj.dimension;
+                vhat = obj.zeropad(vhat,ratio) * ratio.^obj.dimension;
+            end
+
+            u = obj.ifftLocal(uhat);
+            v = obj.ifftLocal(vhat);
+
+            w = u.^powers(1) .* v.^powers(2);
+            
+            what = obj.fftLocal(w);
+            
+            if obj.antialiasing
+                what = obj.trunc(what / ratio.^obj.dimension, ...
+                    1/ratio);
+            end
+        end
+
+        function uhatpad = zeropad(obj, uhat, ratio)
+            if obj.dimension == 1
+                uhatpad = obj.zeropad1d(uhat, ratio);
+            elseif obj.dimension == 2
+                uhatpad = permute(obj.zeropad1d(permute(obj.zeropad1d(uhat,ratio),[2,1,3]),ratio,2),[2,1,3]);
+            else
+                error("zeropad not defined for higher dimensions.")
+            end
+
+        end
+
+        function uhat = trunc(obj, uhatpad, ratio)
+            if obj.dimension == 1
+                uhat = obj.trunc1d(uhatpad,ratio);
+            elseif obj.dimension == 2
+                uhat = permute(obj.trunc1d(permute(obj.trunc1d(uhatpad,ratio),[2,1,3]),ratio,2),[2,1,3]);
+            else
+                error("trunc not defined for higher dimensions.")
+            end
         end
 
         function out = filterOutShortWaves(obj, in, ratioKeptToAll)
@@ -243,12 +264,15 @@ classdef PSDomain < Domain
             if nargin < 4, dimension = 1; end
             
             N = size(upad,1);
+            s = size(upad);
+            u = zeros([N*ratio, s(2:end)]); 
             if ~obj.complex && dimension == 1
-                ind = 1:ratio * N;
+                ind = (1:ratio * N)';
+                u(ind,:,:) = upad(ind,:,:);
             else
-                ind = [1:ratio * N/2, N/2 + 1, N - ratio * N/2 + 2:N];
+                ind = [1:ratio * N/2, N - ratio * N/2 + 2:N]';
+                u([1:ratio*N/2,ratio*N/2+2:ratio*N],:,:) = upad(ind,:,:);
             end
-            u = upad(ind,:,:);
         end
     end
 end

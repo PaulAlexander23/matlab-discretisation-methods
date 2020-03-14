@@ -2,18 +2,66 @@ function tests = testPSDomain()
     tests = functiontests(localfunctions);
 end
 
-function testConstructor1DDefault(testCase)
+function testConstructorDefault(testCase)
     domain = PSDomain(setup1dX(2^8));
     
-    verifyEqual(testCase, domain.length, 1);
-    verifyEqual(testCase, domain.wavenumber{1}, ...
-        [0:2^7 - 1, 0, 1 - 2^7:-1]' * 2*pi);
+    verifyEqual(testCase, domain.antialiasing, false);
+    verifyEqual(testCase, domain.complex, true);
+    verifyEqual(testCase, domain.suppression, eps);
+
+    domain = PSDomain(setup2dX(2^8));
+    
     verifyEqual(testCase, domain.antialiasing, false);
     verifyEqual(testCase, domain.complex, true);
     verifyEqual(testCase, domain.suppression, eps);
 end
 
-function testConstructor1DAntiAliasingFlag(testCase)
+function testLength(testCase)
+    N = 2^5;
+    L = 2*pi;
+
+    domain = PSDomain({linspace(L/N, L, N)});
+    verifyEqual(testCase, domain.length, L);
+
+    domain = PSDomain({linspace(L/N/2, L - L/N/2, N)});
+    verifyEqual(testCase, domain.length, L, 'RelTol', eps);
+
+    domain = PSDomain({linspace(L/N, L, N), linspace(L/N, L, N)});
+    verifyEqual(testCase, domain.length, [L; L]);
+
+    domain = PSDomain({linspace(L/N/2, L - L/N/2, N), linspace(L/N/2, L - L/N/2, N)});
+    verifyEqual(testCase, domain.length, [L; L], 'RelTol', eps);
+end
+
+function testWavenumber(testCase)
+    N = 2^5;
+    L = 2*pi;
+
+    domain = PSDomain({linspace(L/N, L, N)});
+    verifyEqual(testCase, domain.wavenumber, {[0:N/2-1, 0, -N/2+1:-1]'});
+
+    domain = PSDomain({linspace(L/N, L, N)}, false, false);
+    verifyEqual(testCase, domain.wavenumber, {(0:N/2-1)'});
+
+    domain = PSDomain({linspace(L/N, L, N), linspace(L/N, L, N)});
+    verifyEqual(testCase, domain.wavenumber, {[0:N/2-1, 0, -N/2+1:-1]', [0:N/2-1, 0, -N/2+1:-1]'});
+
+    domain = PSDomain({linspace(L/N, L, N), linspace(L/N, L, N)}, false, false);
+    verifyEqual(testCase, domain.wavenumber, {(0:N/2-1)', [0:N/2-1, 0, -N/2+1:-1]'});
+end
+
+function testSuppression(testCase)
+    N = 2^5;
+    L = 2*pi;
+
+    domain = PSDomain({linspace(L/N, L, N)});
+    verifyEqual(testCase, domain.suppression, eps);
+
+    domain = PSDomain({linspace(L/N, L, N)}, false, false, 1e-5);
+    verifyEqual(testCase, domain.suppression, 1e-5);
+end
+
+function testAntiAliasingFlag(testCase)
     domain = PSDomain(setup1dX(2^8), false);
     verifyEqual(testCase, domain.antialiasing, false);
 
@@ -21,7 +69,7 @@ function testConstructor1DAntiAliasingFlag(testCase)
     verifyEqual(testCase, domain.antialiasing, true);
 end
 
-function testConstructor1DComplexFlag(testCase)
+function testComplexFlag(testCase)
     domain = PSDomain(setup1dX(2^8), true, false);
     verifyEqual(testCase, domain.complex, false);
     verifyEqual(testCase, domain.wavenumber{1}, ...
@@ -37,6 +85,24 @@ function testConstructor1DComplexFlag(testCase)
 
     domain = PSDomain(setup1dX(2^8), false, true);
     verifyEqual(testCase, domain.complex, true);
+end
+
+function testScaling1D(testCase)
+    n = 2^8;
+    domain = PSDomain(setup1dX(n));
+    amplitude = 2;
+    y = amplitude * cos(2 * pi * (domain.x{1} - domain.x{1}(1)));
+    fy = domain.fft(y);
+    verifyEqual(testCase, max(real(fy)), amplitude, 'RelTol', eps);
+end
+
+function testScaling2D(testCase)
+    n = 2^8;
+    domain = PSDomain(setup2dX(n));
+    amplitude = 2;
+    y = amplitude * cos(2 * pi * (domain.x{1} - domain.x{1}(1) + domain.x{2} - domain.x{2}(1)));
+    fy = domain.fft(y);
+    verifyEqual(testCase, max(max(real(fy))), amplitude, 'RelTol', eps);
 end
 
 function testReshapeToVectorReal(testCase)
@@ -109,6 +175,73 @@ function testFFT1DReal(testCase)
         expected(m+1) = 1;
         
         verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+    end
+end
+
+function testFFT1DMultipleSurfaces(testCase)
+    N = 128;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/N,L,N)}, false, true);
+    y = cos(domain.x{1});
+    z = [y, 2*y; 3*y, 4*y];
+
+    fy = domain.fft(y);
+    expected = [fy, 2*fy; 3*fy, 4*fy];
+    actual = domain.fft(z);
+
+    verifyEqual(testCase, actual, expected, 'RelTol', 2*eps);
+end
+
+function testFFT1DMultipleSurfacesReal(testCase)
+    N = 128;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/N,L,N)}, false, false);
+    y = cos(domain.x{1});
+    z = [y, 2*y; 3*y, 4*y];
+
+    fy = domain.fft(y);
+    expected = [fy, 2*fy; 3*fy, 4*fy];
+    actual = domain.fft(z);
+
+    verifyEqual(testCase, actual, expected, 'RelTol', 2*eps);
+end
+
+function testFFT2D(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M,L,M),linspace(L/N,L,N)});
+
+    for m = 1:M/2-1
+        for n = 1:M/2-1
+            y = cos(m * (domain.x{1} - domain.x{1}(1)) + n * (domain.x{2} - domain.x{2}(1)));
+            
+            actual = domain.fft(y);
+            expected = zeros(M, N);
+            expected(m+1, n+1) = 1;
+            expected(M-m+1, N-n+1) = 1;
+            
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
+end
+
+function testFFT2DReal(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M,L,M),linspace(L/N,L,N)}, false, false);
+
+    for m = 1:M/2-1
+        for n = 1:M/2-1
+            y = cos(m * (domain.x{1} - domain.x{1}(1)) + n * (domain.x{2} - domain.x{2}(1)));
+            
+            actual = domain.fft(y);
+            expected = zeros(M/2, N);
+            expected(m+1, n+1) = 1;
+            
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
     end
 end
 
@@ -206,6 +339,82 @@ function testIFFT1DMultipleSurfacesReal(testCase)
     actual = domain.ifft(z);
     
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-14, 'AbsTol', 1e-14);
+end
+
+function testIFFT2D(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M,L,M), linspace(L/N,L,N)});
+    
+    for m = 1:M/2-1
+        for n = 1:N/2-1
+            y = zeros(M, N);
+            y(m+1, n+1) = 1;
+            y(M-m+1, N-n+1) = 1;
+            
+            expected = cos(m * (domain.x{1} - domain.x{1}(1)) + n * (domain.x{2} - domain.x{2}(1)));
+            actual = domain.ifft(y);
+        
+            verifyEqual(testCase, actual, expected, 'RelTol', 1e-12, 'AbsTol', 1e-12);
+        end
+    end
+end
+
+function testIFFT2DReal(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M,L,M), linspace(L/N,L,N)}, false, false);
+    
+    for m = 1:M/2-1
+        for n = 1:N/2-1
+            y = zeros(M/2, N);
+            y(m+1, n+1) = 1;
+            
+            expected = cos(m * (domain.x{1} - domain.x{1}(1)) + n * (domain.x{2} - domain.x{2}(1)));
+            actual = domain.ifft(y);
+        
+            verifyEqual(testCase, actual, expected, 'RelTol', 1e-12, 'AbsTol', 1e-12);
+        end
+    end
+end
+
+function testIFFT2DMultipleSurfaces(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M,L,M), linspace(L/N,L,N)});
+    
+    y = zeros(M, N);
+    y(2,2) = 1;
+    y(M,N) = 1;
+    
+    z = [y, 2*y; 3*y, 4*y];
+    Y = cos((domain.x{1} - domain.x{1}(1)) + (domain.x{2} - domain.x{2}(1)));
+
+    expected = [Y, 2*Y; 3*Y, 4*Y];
+    actual = domain.ifft(z);
+
+    verifyEqual(testCase, actual, expected, 'RelTol', 1e-12, 'AbsTol', 1e-12);
+end
+
+function testIFFT2DMultipleSurfacesReal(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M,L,M), linspace(L/N,L,N)}, false, false);
+    
+    y = zeros(M/2, N);
+    y(2,2) = 1;
+    
+    z = [y, 2*y; 3*y, 4*y];
+    Y = cos((domain.x{1} - domain.x{1}(1)) + (domain.x{2} - domain.x{2}(1)));
+
+    expected = [Y, 2*Y; 3*Y, 4*Y];
+    actual = domain.ifft(z);
+
+    verifyEqual(testCase, actual, expected, 'RelTol', 1e-12, 'AbsTol', 1e-12);
 end
 
 function testDiff1D(testCase)
@@ -314,6 +523,26 @@ function testDiff2DMultipleSurfaces(testCase)
     verifyEqual(testCase, actual, expected, 'RelTol', 1e-11, 'AbsTol', 1e-11);
 end
 
+function testDiff2DMultipleSurfacesReal(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M, L, M), linspace(L/N, L, N)}, false, false);
+
+    y = domain.fft(cos(domain.x{1} + domain.x{2}));
+    dy = domain.fft(-sin(domain.x{1} + domain.x{2}));
+    
+    actual = domain.diff([y, 2*y; 3*y, 4*y], [1, 0]');
+    expected = [dy, 2*dy; 3*dy, 4*dy];
+    
+    verifyEqual(testCase, actual, expected, 'RelTol', 1e-11, 'AbsTol', 1e-11);
+
+    actual = domain.diff([y, 2*y; 3*y, 4*y], [0, 1]');
+    expected = [dy, 2*dy; 3*dy, 4*dy];
+    
+    verifyEqual(testCase, actual, expected, 'RelTol', 1e-11, 'AbsTol', 1e-11);
+end
+
 function testGetDiffMatrix1D(testCase)
     N = 2^5;
     L = 2*pi;
@@ -325,6 +554,22 @@ function testGetDiffMatrix1D(testCase)
     verifyEqual(testCase, actual, expected);
 
     expected = spdiags(- [0:N/2-1,0,-N/2+1:-1]' .^ 2, 0, N, N);
+    actual = domain.diffMat(2);
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testGetDiffMatrix1DReal(testCase)
+    N = 2^5;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/N, L, N)}, false, false);
+    
+    expected = spdiags(1i * (0:N/2-1)', 0, N/2, N/2);
+    actual = domain.diffMat(1);
+    
+    verifyEqual(testCase, actual, expected);
+
+    expected = spdiags(- (0:N/2-1)' .^ 2, 0, N/2, N/2);
     actual = domain.diffMat(2);
     
     verifyEqual(testCase, actual, expected);
@@ -342,6 +587,23 @@ function testGetDiffMatrix2D(testCase)
     verifyEqual(testCase, actual, expected);
 
     expected = kron(spdiags(1i * [0:N/2-1,0,-N/2+1:-1]', 0, N, N), speye(M));
+    actual = domain.diffMat([0, 1]');
+    
+    verifyEqual(testCase, actual, expected);
+end
+
+function testGetDiffMatrix2DReal(testCase)
+    M = 2^4;
+    N = 2^5;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M, L, M), linspace(L/N, L, N)}, false, false);
+    
+    expected = kron(speye(N), spdiags(1i * (0:M/2-1)', 0, M/2, M/2));
+    actual = domain.diffMat([1, 0]');
+    
+    verifyEqual(testCase, actual, expected);
+
+    expected = kron(spdiags(1i * [0:N/2-1,0,-N/2+1:-1]', 0, N, N), speye(M/2));
     actual = domain.diffMat([0, 1]');
     
     verifyEqual(testCase, actual, expected);
@@ -386,145 +648,174 @@ function testMultiply1DDealiased(testCase)
     end
 end
 
-function testZeropad1D(testCase)
-    N = 32;
+function testMultiply1DReal(testCase)
+    N = 2^5;
     L = 2*pi;
-    domain = PSDomain({linspace(L/N, L, N)});
-    
-    f = domain.x{1};
-    ratio = 3/2;
-    
-    actual = domain.zeropad(f, ratio);
-    
-    expected = zeros(N * ratio, 1);
-    expected(1:N/2) = f(1:N/2);
-    expected(ratio*N-N/2+1:ratio*N) = f(1+N/2:end);
-    
-    verifyEqual(testCase, actual, expected);
+    domain = PSDomain({linspace(L/N, L, N)},false,false);
+
+    for n = 1:N/2 - 2
+        for m = 1:N/2 - 1 - n
+            expected = domain.fft(cos((m - n) * domain.x{1}) + cos((m + n) * domain.x{1}));
+            actual = 2 * domain.multiply(domain.fft(cos(m * domain.x{1})), domain.fft(cos(n * domain.x{1})));
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
 end
 
-function testZeropad1DReal(testCase)
-    N = 32;
+function testMultiply1DDealiasedReal(testCase)
+    N = 2^5;
     L = 2*pi;
-    domain = PSDomain({linspace(L/N, L, N)}, false, false);
-    
-    f = domain.x{1};
-    ratio = 3/2;
-    
-    actual = domain.zeropad(f, ratio);
-    
-    expected = zeros(N * ratio,1);
-    expected(1:N) = f;
-    
-    verifyEqual(testCase, actual, expected);
+    domain = PSDomain({linspace(L/N, L, N)}, true, false);
+
+    for n = 1:N/2 - 2
+        for m = 1:N/2 - 1 - n
+            expected = domain.fft(cos((m - n) * domain.x{1}) + cos((m + n) * domain.x{1}));
+            actual = 2 * domain.multiply(domain.fft(cos(m * domain.x{1})), domain.fft(cos(n * domain.x{1})));
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
+
+    for n = 1:N/2 - 1
+        for m = N/2 - n:N/2 - 1 
+            expected = domain.fft(cos((m - n) * domain.x{1}));
+            actual = 2 * domain.multiply(domain.fft(cos(m * domain.x{1})), domain.fft(cos(n * domain.x{1})));
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
 end
 
-function testZeropad2D(testCase)
-    M = 64;
-    N = 32;
+function testMultiply1DMultipleSurfaces(testCase)
+    N = 2^5;
     L = 2*pi;
-    domain = PSDomain({linspace(L/M, L, M), linspace(L/N, L, N)});
-    
-    f = domain.x{1} + domain.x{2};
-    ratio = 3/2;
-    
-    actual = domain.zeropad(f, ratio);
-    
-    expected = zeros([M, N] * ratio);
-    expected(1:M/2,1:N/2) = f(1:M/2,1:N/2);
-    expected(1:M/2,ratio*N-N/2+1:ratio*N) = f(1:M/2,1+N/2:end);
-    expected(ratio*M-M/2+1:ratio*M,1:N/2) = f(1+M/2:end,1:N/2);
-    expected(ratio*M-M/2+1:ratio*M,ratio*N-N/2+1:ratio*N) = f(1+M/2:end,1+N/2:end);
-    
-    verifyEqual(testCase, actual, expected);
+    domain = PSDomain({linspace(L/N, L, N)},false);
+
+    for n = 1:N/2 - 2
+        for m = 1:N/2 - 1 - n
+            f = domain.fft(cos((m - n) * domain.x{1}) + cos((m + n) * domain.x{1}));
+            g1 = domain.fft(cos(m * domain.x{1}));
+            g2 = domain.fft(cos(n * domain.x{1}));
+
+            expected = [f, 2*f; 3*f, 4*f];
+            actual = 2 * domain.multiply([g1, 2*g1; 3*g1, 4*g1],[g2, g2; g2, g2]);
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
 end
 
-function testZeropad2DReal(testCase)
-    M = 64;
-    N = 32;
+function testMultiply1DMultipleSurfacesDealiased(testCase)
+    N = 2^5;
     L = 2*pi;
-    domain = PSDomain({linspace(L/M, L, M), linspace(L/N, L, N)}, false, false);
-    
-    f = domain.x{1} + domain.x{2};
-    ratio = 3/2;
-    
-    actual = domain.zeropad(f, ratio);
-    expected = zeros([M, N] * ratio);
-    expected(1:M,1:N/2) = f(1:M,1:N/2);
-    expected(1:M,ratio*N-N/2+1:ratio*N) = f(1:M,1+N/2:end);
+    domain = PSDomain({linspace(L/N, L, N)},true);
 
-    verifyEqual(testCase, actual, expected);
+    for n = 1:N/2 - 2
+        for m = 1:N/2 - 1 - n
+            f = domain.fft(cos((m - n) * domain.x{1}) + cos((m + n) * domain.x{1}));
+            g1 = domain.fft(cos(m * domain.x{1}));
+            g2 = domain.fft(cos(n * domain.x{1}));
+
+            expected = [f, 2*f; 3*f, 4*f];
+            actual = 2 * domain.multiply([g1, 2*g1; 3*g1, 4*g1],[g2, g2; g2, g2]);
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
 end
 
-function testTrunc1D(testCase)
-    N = 3*32;
-    domain = PSDomain(setup1dX(N));
-    
-    f = [0:N/2-1,0,-N/2+1:-1]';
-    ratio = 2/3;
-    
-    expected = [0:ratio*N/2-1,0,-ratio*N/2+1:-1]';
-    actual = domain.trunc(f, ratio);
-    
-    verifyEqual(testCase, actual, expected);
+function testMultiply1DMultipleSurfacesReal(testCase)
+    N = 2^5;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/N, L, N)},false,false);
+
+    for n = 1:N/2 - 2
+        for m = 1:N/2 - 1 - n
+            f = domain.fft(cos((m - n) * domain.x{1}) + cos((m + n) * domain.x{1}));
+            g1 = domain.fft(cos(m * domain.x{1}));
+            g2 = domain.fft(cos(n * domain.x{1}));
+
+            expected = [f, 2*f; 3*f, 4*f];
+            actual = 2 * domain.multiply([g1, 2*g1; 3*g1, 4*g1],[g2, g2; g2, g2]);
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
 end
 
-function testTrunc1DReal(testCase)
-    N = 3*32;
-    domain = PSDomain(setup1dX(N), false, false);
-    
-    f = (0:N-1)';
-    ratio = 2/3;
-    
-    actual = domain.trunc(f, ratio);
-    
-    expected = (0:N*ratio-1)';
-    
-    verifyEqual(testCase, actual, expected);
+function testMultiply1DMultipleSurfacesDealiasedReal(testCase)
+    N = 2^5;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/N, L, N)},true,false);
+
+    for n = 1:N/2 - 2
+        for m = 1:N/2 - 1 - n
+            f = domain.fft(cos((m - n) * domain.x{1}) + cos((m + n) * domain.x{1}));
+            g1 = domain.fft(cos(m * domain.x{1}));
+            g2 = domain.fft(cos(n * domain.x{1}));
+
+            expected = [f, 2*f; 3*f, 4*f];
+            actual = 2 * domain.multiply([g1, 2*g1; 3*g1, 4*g1],[g2, g2; g2, g2]);
+
+            verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+        end
+    end
 end
 
-function testTrunc2D(testCase)
-    N = 3*32;
-    domain = PSDomain(setup2dX(N));
-    
-    f = repmat([0:N/2-1,0,-N/2+1:-1]', 1, N);
-    ratio = 2/3;
-    
-    expected = repmat([0:ratio*N/2-1,0,-ratio*N/2+1:-1]', 1, N*ratio);
-    actual = domain.trunc(f, ratio);
-    
-    verifyEqual(testCase, actual, expected);
+function testMultiply2D(testCase)
+    M = 2^5;
+    N = 2^4;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M, L, M), linspace(L/N, L, N)}, false);
+
+    for n = 1:M/2 - 2
+        for m = 1:M/2 - 1 - n
+            for b = 1:N/2 - 2
+                for a = 1:N/2 - 1 - b
+                    expected = domain.fft(cos((m - n) * domain.x{1} + (a - b) * domain.x{2}) + ...
+                        cos((m + n) * domain.x{1} + (a + b) * domain.x{2}));
+                    actual = 2 * domain.multiply(domain.fft(cos(m * domain.x{1} + a * domain.x{2})), domain.fft(cos(n * domain.x{1} + b * domain.x{2})));
+
+                    verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+                end
+            end
+        end
+    end
 end
 
-function testTrunc2DReal(testCase)
-    N = 3*32;
-    domain = PSDomain(setup2dX(N), false, false);
-    
-    f = repmat((0:N-1)', 1, N);
-    ratio = 2/3;
-    
-    actual = domain.trunc(f, ratio);
-    expected = repmat((0:N*ratio-1)', 1, N*ratio);
-    
-    verifyEqual(testCase, actual, expected);
-end
+function testMultiply2DDealiased(testCase)
+    M = 2^4;
+    N = 2^3;
+    L = 2*pi;
+    domain = PSDomain({linspace(L/M, L, M), linspace(L/N, L, N)}, true);
 
-function testScaling1D(testCase)
-    n = 2^8;
-    domain = PSDomain(setup1dX(n));
-    amplitude = 2;
-    y = amplitude * cos(2 * pi * domain.x{1});
-    fy = domain.fft(y);
-    verifyEqual(testCase, max(real(fy)), amplitude, 'RelTol', 1e-3);
-end
+    for n = 1:M/2 - 2
+        for m = 1:M/2 - 1 - n
+            for b = 1:N/2 - 2
+                for a = 1:N/2 - 1 - b
+                    expected = domain.fft(cos((m - n) * domain.x{1} + (a - b) * domain.x{2}) + ...
+                        cos((m + n) * domain.x{1} + (a + b) * domain.x{2}));
+                    actual = 2 * domain.multiply(domain.fft(cos(m * domain.x{1} + a * domain.x{2})), domain.fft(cos(n * domain.x{1} + b * domain.x{2})));
 
-function testScaling2D(testCase)
-    n = 2^8;
-    domain = PSDomain(setup2dX(n));
-    amplitude = 2;
-    y = amplitude * cos(2 * pi * (domain.x{1} + domain.x{2}));
-    fy = domain.fft(y);
-    verifyEqual(testCase, max(max(real(fy))), amplitude, 'RelTol', 1.3e-3);
+                    verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+                end
+            end
+        end
+    end
+
+    for n = 1:M/2 - 1
+        for m = (M/2 - n):(M/2 - 1)
+            for b = 1:N/2 - 1
+                for a = N/2 - b:N/2 - 1
+                    expected = domain.fft(cos((m - n) * domain.x{1} + (a - b) * domain.x{2}));
+                    actual = 2 * domain.multiply(domain.fft(cos(m * domain.x{1} + a * domain.x{2})), domain.fft(cos(n * domain.x{1} + b * domain.x{2})));
+
+                    verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
+                end
+            end
+        end
+    end
 end
 
 %% Functions
