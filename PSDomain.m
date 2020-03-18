@@ -263,8 +263,8 @@ classdef PSDomain < Domain
         function u = trunc1d(obj, upad, ratio, dimension)
             if nargin < 4, dimension = 1; end
             
-            N = size(upad,1);
             s = size(upad);
+            N = s(1);
             u = zeros([N*ratio, s(2:end)]); 
             if ~obj.complex && dimension == 1
                 ind = (1:ratio * N)';
