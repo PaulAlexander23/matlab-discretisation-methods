@@ -63,12 +63,16 @@ classdef CTFDDomain < Domain
             end
             
             function [DAmat, DBmat] = constructMatrices(x, degree, accuracy)
-                
-                lhsStencilLength = 1 + 2 * fix((degree + accuracy - 1)/4);
-                rhsStencilLength = 1 + 2 * fix((degree + accuracy + 1)/4);
-                
+                if  ceil(accuracy/2) <= ceil(degree/2) + 1
+                    lhsStencilLength = -1 + 2 * ceil(accuracy/2);
+                    rhsStencilLength = 1 + 2 * ceil(degree/2);
+                else
+                    lhsStencilLength = 1 + 2 * fix((degree + accuracy - 1)/4);
+                    rhsStencilLength = 1 + 2 * fix((degree + accuracy + 1)/4);
+                end
+
                 [lhsStencil, lhsCoefficients, rhsStencil, rhsCoefficients] = ...
-                    ctfdScheme(lhsStencilLength, rhsStencilLength, degree);
+                    ctfdScheme(lhsStencilLength, rhsStencilLength, degree)
                 
                 xLength = length(x);
                 dx = x(2) - x(1);
