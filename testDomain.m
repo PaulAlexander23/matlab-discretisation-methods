@@ -81,6 +81,21 @@ function testDomain2dReshapeToVectorLargerVertical(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
+function testDomain2dReshapeToVectorThirdDimension(testCase)
+    domain = setup2DDomain();
+    f = domain.x{1} + domain.x{2};
+    f2 = zeros(256,256,2);
+    f2(:,:,1) = f;
+    f2(:,:,2) = 2*f;
+
+    actual = domain.reshapeToVector(f2);
+    expected = zeros(256*256, 1, 2);
+    expected(:, 1, 1) = reshape(f, [], 1);
+    expected(:, 1, 2) = reshape(2*f, [], 1);
+
+    verifyEqual(testCase, actual, expected);
+end
+
 function testDomain1dReshapeToDomain(testCase)
     domain = setup1DDomain();
     f = domain.x{1};
@@ -151,6 +166,21 @@ function testDomain2dReshapeToDomainLargerVertical(testCase)
     actual = domain.reshapeToDomain(fVec);
 
 
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testDomain2dReshapeToDomainThirdDimension(testCase)
+    domain = setup2DDomain();
+    f = cos(2*pi*domain.x{1}) + cos(2*pi*domain.x{2});
+    fVec = zeros(256*256, 1, 2);
+    fVec(:,:,1) = reshape(f,[],1);
+    fVec(:,:,2) = 2*reshape(f,[],1);
+
+    expected = zeros(256, 256, 2);
+    expected(:,:,1) = f; 
+    expected(:,:,2) = 2 * f;
+    actual = domain.reshapeToDomain(fVec);
 
     verifyEqual(testCase, actual, expected);
 end

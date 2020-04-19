@@ -62,10 +62,15 @@ classdef Domain
         end
 
         function ycell = extractShapeAsCell(~, y, shape)
-            shapeMultiplier = size(y)./shape;
+            localShape = ones(1,3);
+            localShape(1:length(shape)) = shape;
+            localYSize = ones(1,3);
+            localYSize(1:length(size(y))) = size(y);
+            shapeMultiplier = localYSize./localShape;
             ycell = mat2cell(y, ...
                 repmat(shape(1), 1, shapeMultiplier(1)), ...
-                repmat(shape(2), 1, shapeMultiplier(2)));
+                repmat(shape(2), 1, shapeMultiplier(2)), ...
+                ones(1, shapeMultiplier(3)));
         end
     end
 end
