@@ -72,7 +72,7 @@ classdef CTFDDomain < Domain
                 end
 
                 [lhsStencil, lhsCoefficients, rhsStencil, rhsCoefficients] = ...
-                    ctfdScheme(lhsStencilLength, rhsStencilLength, degree)
+                    ctfdScheme(lhsStencilLength, rhsStencilLength, degree);
                 
                 xLength = length(x);
                 dx = x(2) - x(1);

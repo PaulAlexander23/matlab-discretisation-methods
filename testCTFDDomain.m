@@ -75,21 +75,20 @@ function test1DDiffDegree3Convergence(testCase)
     errorVector = zeros(length(N), 1);
     
     degree = 3;
-    for accuracy = 4:2:4
+    for accuracy = 2:2:2
         for n = 1:length(N)
             x = {linspace(2*pi/N(n), 2*pi, N(n))'};
             domain = CTFDDomain(x, degree, accuracy);
             
             f = exp(cos(domain.x{1}));
             
-            expected = -sin(domain.x{1}).^3 .* exp(cos(domain.x{1})) + 3 * sin(domain.x{1}) .* cos(domain.x{1}) .* exp(cos(domain.x{1})) + sin(domain.x{1}) .* exp(cos(domain.x{1}));
+            expected = -sin(domain.x{1}).^3 .* exp(cos(domain.x{1})) ...
+                + 3 * sin(domain.x{1}) .* cos(domain.x{1}) .* exp(cos(domain.x{1})) ...
+                + sin(domain.x{1}) .* exp(cos(domain.x{1}));
             actual = domain.diff(f, degree);
-            plot(actual)
-            hold on
-            plot(expected)
+
             errorVector(n) = max(abs(actual - expected));
         end
-        figure; plot(log10(N),log10(errorVector));
 
         viableIndices = logical((errorVector < 10^(-1.5)) .* (errorVector > 10^(-7)) .* (N' > 20));
         actualConvergence = -mean(gradient(log10(errorVector(viableIndices)), log10(N(viableIndices))));
