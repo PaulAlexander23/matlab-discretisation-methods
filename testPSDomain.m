@@ -7,13 +7,13 @@ function testConstructorDefault(testCase)
     
     verifyEqual(testCase, domain.antialiasing, false);
     verifyEqual(testCase, domain.complex, true);
-    verifyEqual(testCase, domain.suppression, eps);
+    verifyEqual(testCase, domain.suppression, 1e-15);
 
     domain = PSDomain(setup2dX(2^8));
     
     verifyEqual(testCase, domain.antialiasing, false);
     verifyEqual(testCase, domain.complex, true);
-    verifyEqual(testCase, domain.suppression, eps);
+    verifyEqual(testCase, domain.suppression, 1e-15);
 end
 
 function testLength(testCase)
@@ -55,7 +55,7 @@ function testSuppression(testCase)
     L = 2*pi;
 
     domain = PSDomain({linspace(L/N, L, N)});
-    verifyEqual(testCase, domain.suppression, eps);
+    verifyEqual(testCase, domain.suppression, 1e-15);
 
     domain = PSDomain({linspace(L/N, L, N)}, false, false, 1e-5);
     verifyEqual(testCase, domain.suppression, 1e-5);

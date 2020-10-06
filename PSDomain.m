@@ -16,7 +16,7 @@ classdef PSDomain < Domain
         function obj = PSDomain(x, antialiasing, complex, suppression)
             if nargin < 2, antialiasing = false; end
             if nargin < 3, complex = true; end
-            if nargin < 4, suppression = eps; end
+            if nargin < 4, suppression = 1e-15; end
             
             obj = obj@Domain(x);
             obj.length = calculateLength(obj);
@@ -41,7 +41,7 @@ classdef PSDomain < Domain
             fcell = obj.fftCell(xcell);
             f = cell2mat(fcell);
             
-            f = suppress(obj, f);
+            f = zeroSmallModes(obj, f);
         end
         
         function x = ifft(obj, f)
@@ -102,10 +102,6 @@ classdef PSDomain < Domain
             f = [f; zeros(size(f))];
         end
 
-        function dyhat = suppress(obj, dyhat)
-            dyhat(abs(dyhat)<obj.suppression * max(max(abs(dyhat)))) = 0;
-        end
-        
         function fcell = fftCell(obj, xcell)
             fcell = cellfun(@(x)obj.fftLocal(x), xcell, 'UniformOutput', false);
         end
@@ -137,7 +133,7 @@ classdef PSDomain < Domain
         end
 
         function dyhat = diffLocal(obj, yhat, degree)
-            dyhat = obj.suppress(yhat);
+            dyhat = obj.zeroSmallModes(yhat);
             
             dyhat = obj.reshapeToVector(dyhat);
             
