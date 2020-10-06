@@ -74,6 +74,42 @@ classdef PSDomain < Domain
 
            uhat(abs(uhat) < tolerance) = 0; 
         end
+
+        function out = filterOutShortWaves(obj, in, ratioKeptToAll)
+            ratio = ratioKeptToAll/2;
+            if obj.dimension == 1
+                f = ones(obj.shape);
+                f(round(end*ratio+1):round(end-end*ratio)) = 0;
+            elseif obj.dimension == 2
+                f = zeros(obj.shape);
+                for k = 1:obj.shape(2)
+                    for j = 1:obj.shape(1)
+                        if inRegion(j,k,obj.shape,ratio .* obj.shape)
+                            f(j,k) = 1;
+                        end
+                    end
+                end
+            end
+            
+            out = in .* f;
+            
+            function out = inRegion(j,k,shape,radii)
+                out = any([ ...
+                    inEllipse(j,k,[1,1],radii), ...
+                    inEllipse(j,k,[shape(1),1],radii), ...
+                    inEllipse(j,k,[1,shape(2)],radii), ...
+                    inEllipse(j,k,[shape(1),shape(2)],radii)]);
+            end
+            
+            function out = inEllipse(j,k,centre,radii)
+                out = (j - centre(1)).^2 ./ radii(1).^2 + (k - centre(2)).^2 ./ radii(2).^2 < 1;
+                
+            end
+            
+            function out = inTriangle(j, k, centre, sides)
+                out = abs(j - centre(1)) ./ sides(1) + abs(k - centre(2)) ./ sides(2) < 1;
+            end
+        end
     end
 
     methods(Access = private)
@@ -194,42 +230,6 @@ classdef PSDomain < Domain
             end
         end
 
-        function out = filterOutShortWaves(obj, in, ratioKeptToAll)
-            ratio = ratioKeptToAll/2;
-            if obj.dimension == 1
-                f = ones(obj.shape);
-                f(round(end*ratio+1):round(end-end*ratio)) = 0;
-            elseif obj.dimension == 2
-                f = zeros(obj.shape);
-                for k = 1:obj.shape(2)
-                    for j = 1:obj.shape(1)
-                        if inRegion(j,k,obj.shape,ratio .* obj.shape)
-                            f(j,k) = 1;
-                        end
-                    end
-                end
-            end
-            
-            out = in .* f;
-            
-            function out = inRegion(j,k,shape,radii)
-                out = any([ ...
-                    inEllipse(j,k,[1,1],radii), ...
-                    inEllipse(j,k,[shape(1),1],radii), ...
-                    inEllipse(j,k,[1,shape(2)],radii), ...
-                    inEllipse(j,k,[shape(1),shape(2)],radii)]);
-            end
-            
-            function out = inEllipse(j,k,centre,radii)
-                out = (j - centre(1)).^2 ./ radii(1).^2 + (k - centre(2)).^2 ./ radii(2).^2 < 1;
-                
-            end
-            
-            function out = inTriangle(j, k, centre, sides)
-                out = abs(j - centre(1)) ./ sides(1) + abs(k - centre(2)) ./ sides(2) < 1;
-            end
-        end
-        
         function f = wavenumberMultiplicand(obj, degree)
             if obj.complex
                 m = prod(obj.shape);

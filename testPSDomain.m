@@ -837,6 +837,46 @@ function testZeroSmallModes(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
+function testFilterOutShortWaves1D(testCase)
+    domain = PSDomain({1:16});
+    f = domain.x{1};
+
+    expected = f;
+    actual = domain.filterOutShortWaves(f,1);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = 0 * f;
+    actual = domain.filterOutShortWaves(f,0);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = [1:5,0,0,0,0,0,0,12:16]';
+    actual = domain.filterOutShortWaves(f,2/3);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testFilterOutShortWaves2D(testCase)
+    domain = PSDomain({1:100,1:100});
+    f = domain.x{1} + 16*(domain.x{2} - 1);
+
+    expected = f;
+    actual = domain.filterOutShortWaves(f,2);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = 0 * f;
+    actual = domain.filterOutShortWaves(f,0);
+
+    verifyEqual(testCase, actual, expected);
+
+    actual = domain.filterOutShortWaves(f,2/3);
+
+    verifyTrue(testCase, numel(find(actual))/numel(expected) >= 1/3)
+    verifyTrue(testCase, numel(find(actual))/numel(expected) < 0.5)
+end
+
 %% Functions
 function x = setup1dX(n)
     x = {linspace(1/n, 1, n)'};
