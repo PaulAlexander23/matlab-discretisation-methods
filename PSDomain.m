@@ -68,6 +68,12 @@ classdef PSDomain < Domain
             whatCell = obj.multiplyCell(uhatCell, vhatCell, powers);
             what = cell2mat(whatCell);
         end
+
+        function uhat = zeroSmallModes(obj, uhat, tolerance)
+            if nargin < 3, tolerance = obj.suppression; end
+
+           uhat(abs(uhat) < tolerance) = 0; 
+        end
     end
 
     methods(Access = private)

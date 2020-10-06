@@ -818,6 +818,25 @@ function testMultiply2DDealiased(testCase)
     end
 end
 
+function testZeroSmallModes(testCase)
+    tolerance = 1e-6;
+
+    domain = PSDomain({1:16});
+
+    f = 10.^(-domain.x{1});
+
+    expected = f .* (f >= tolerance);
+    actual = domain.zeroSmallModes(f, tolerance);
+
+    verifyEqual(testCase, actual, expected);
+
+    domain.suppression = tolerance;
+
+    actual = domain.zeroSmallModes(f);
+
+    verifyEqual(testCase, actual, expected);
+end
+
 %% Functions
 function x = setup1dX(n)
     x = {linspace(1/n, 1, n)'};
