@@ -75,30 +75,47 @@ classdef PSDomain < Domain
            uhat(abs(uhat) < tolerance) = 0; 
         end
 
-        function out = filterOutShortWaves(obj, in, ratioKeptToAll)
+        function out = filterOutShortWaves(obj, in, ratioKeptToAll, mask)
+            if nargin < 4, mask = "rectangle"; end
+
             ratio = ratioKeptToAll/2;
             if obj.dimension == 1
-                f = ones(obj.shape);
-                f(round(end*ratio+1):round(end-end*ratio)) = 0;
+                shortWaveFilter = ones(obj.shape);
+                shortWaveFilter(floor(end*ratio+1):ceil(end-end*ratio)) = 0;
             elseif obj.dimension == 2
-                f = zeros(obj.shape);
+                shortWaveFilter = zeros(obj.shape);
                 for k = 1:obj.shape(2)
                     for j = 1:obj.shape(1)
-                        if inRegion(j,k,obj.shape,ratio .* obj.shape)
-                            f(j,k) = 1;
+                        if inRegion(j,k,obj.shape,ratio .* obj.shape, mask)
+                            shortWaveFilter(j,k) = 1;
                         end
                     end
                 end
             end
             
-            out = in .* f;
+            out = in .* shortWaveFilter;
             
-            function out = inRegion(j,k,shape,radii)
-                out = any([ ...
-                    inEllipse(j,k,[1,1],radii), ...
-                    inEllipse(j,k,[shape(1),1],radii), ...
-                    inEllipse(j,k,[1,shape(2)],radii), ...
-                    inEllipse(j,k,[shape(1),shape(2)],radii)]);
+            function out = inRegion(j,k,shape,radii, mask)
+                if mask == "ellipse"
+                    out = any([ ...
+                        inEllipse(j,k,[1,1],radii), ...
+                        inEllipse(j,k,[shape(1),1],radii), ...
+                        inEllipse(j,k,[1,shape(2)],radii), ...
+                        inEllipse(j,k,[shape(1),shape(2)],radii)]);
+                elseif mask == "triangle"
+                    out = any([ ...
+                        inTriangle(j,k,[1,1],radii), ...
+                        inTriangle(j,k,[shape(1),1],radii), ...
+                        inTriangle(j,k,[1,shape(2)],radii), ...
+                        inTriangle(j,k,[shape(1),shape(2)],radii)]);
+                elseif mask == "rectangle"
+                    out = any([ ...
+                        inRectangle(j,k,[1,1],radii), ...
+                        inRectangle(j,k,[shape(1),1],radii), ...
+                        inRectangle(j,k,[1,shape(2)],radii), ...
+                        inRectangle(j,k,[shape(1),shape(2)],radii)]);
+                    
+                end
             end
             
             function out = inEllipse(j,k,centre,radii)
@@ -108,6 +125,10 @@ classdef PSDomain < Domain
             
             function out = inTriangle(j, k, centre, sides)
                 out = abs(j - centre(1)) ./ sides(1) + abs(k - centre(2)) ./ sides(2) < 1;
+            end
+
+            function out = inRectangle(j, k, centre, sides)
+                out = (abs(j - centre(1)) ./ sides(1)) < 1 && (abs(k - centre(2)) ./ sides(2)) < 1;
             end
         end
     end

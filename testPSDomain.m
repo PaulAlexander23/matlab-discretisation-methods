@@ -858,8 +858,8 @@ function testFilterOutShortWaves1D(testCase)
 end
 
 function testFilterOutShortWaves2D(testCase)
-    domain = PSDomain({1:100,1:100});
-    f = domain.x{1} + 16*(domain.x{2} - 1);
+    domain = PSDomain({1:120,1:120});
+    f = domain.x{1} + 120*(domain.x{2} - 1);
 
     expected = f;
     actual = domain.filterOutShortWaves(f,2);
@@ -871,10 +871,23 @@ function testFilterOutShortWaves2D(testCase)
 
     verifyEqual(testCase, actual, expected);
 
-    actual = domain.filterOutShortWaves(f,2/3);
+    newf = domain.filterOutShortWaves(f,2/3,"rectangle");
+    expected = 6400;
+    actual = numel(find(newf));
 
-    verifyTrue(testCase, numel(find(actual))/numel(expected) >= 1/3)
-    verifyTrue(testCase, numel(find(actual))/numel(expected) < 0.5)
+    verifyEqual(testCase, actual, expected);
+
+    newf = domain.filterOutShortWaves(f,2/3,"ellipse");
+    expected = 5172;
+    actual = numel(find(newf));
+
+    verifyEqual(testCase, actual, expected);
+
+    newf = domain.filterOutShortWaves(f,2/3,"triangle");
+    expected = 3280;
+    actual = numel(find(newf));
+
+    verifyEqual(testCase, actual, expected);
 end
 
 %% Functions
