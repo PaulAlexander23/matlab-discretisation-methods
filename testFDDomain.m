@@ -89,6 +89,28 @@ function test2dFiniteDifferenceDiffVector(testCase)
     verifyEqual(testCase,actual,expected,'RelTol',1e-3,'AbsTol',1e-4)
 end
 
+function test2dFiniteDifferenceDiffConvergence(testCase)
+    expectedOrder = 4;
+    resolutions = 2.^(6:10);
+    N = length(resolutions);
+    errNorm = ones(N, 1);
+    diffDegree = [1; 0];
+
+    for n = 1:N
+        domain = FDDomain(setup2dX(resolutions(n)), diffDegree, expectedOrder);
+        Y = exp(-10*cos(domain.x{1}*pi).^2 - 10*cos(domain.x{2}*pi).^2);
+        
+        expected = Y .* (20 * pi * cos(domain.x{1}*pi) .* sin(domain.x{1}*pi));
+        actual = domain.diff(Y, diffDegree);
+
+        errNorm(n) = max(abs(actual - expected), [], 'all');
+    end
+    
+    actualOrder = -(gradient(log10(errNorm), log10(resolutions)));
+
+    verifyTrue(testCase,all(actualOrder > expectedOrder - 1e-1))
+end
+
 function test2dFiniteDifferenceGetDiffMatrix(testCase)
     degree =  [1, 0]';
     domain = FDDomain(setup2dX(2^8), degree, 2);

@@ -16,7 +16,7 @@ classdef PSDomain < Domain
         function obj = PSDomain(x, antialiasing, complex, suppression)
             if nargin < 2, antialiasing = false; end
             if nargin < 3, complex = true; end
-            if nargin < 4, suppression = eps; end
+            if nargin < 4, suppression = 1e-15; end
             
             obj = obj@Domain(x);
             obj.length = calculateLength(obj);
@@ -41,7 +41,7 @@ classdef PSDomain < Domain
             fcell = obj.fftCell(xcell);
             f = cell2mat(fcell);
             
-            f = suppress(obj, f);
+            f = zeroSmallModes(obj, f);
         end
         
         function x = ifft(obj, f)
@@ -67,6 +67,69 @@ classdef PSDomain < Domain
             vhatCell = obj.fourierDomain.extractSurfacesAsCell(vhat);
             whatCell = obj.multiplyCell(uhatCell, vhatCell, powers);
             what = cell2mat(whatCell);
+        end
+
+        function uhat = zeroSmallModes(obj, uhat, tolerance)
+            if nargin < 3, tolerance = obj.suppression; end
+
+           uhat(abs(uhat) < tolerance) = 0; 
+        end
+
+        function out = filterOutShortWaves(obj, in, ratioKeptToAll, mask)
+            if nargin < 4, mask = "rectangle"; end
+
+            ratio = ratioKeptToAll/2;
+            if obj.dimension == 1
+                shortWaveFilter = ones(obj.fourierDomain.shape);
+                shortWaveFilter(floor(end*ratio+1):ceil(end-end*ratio)) = 0;
+            elseif obj.dimension == 2
+                shortWaveFilter = zeros(obj.fourierDomain.shape);
+                for k = 1:obj.fourierDomain.shape(2)
+                    for j = 1:obj.fourierDomain.shape(1)
+                        if inRegion(j,k,obj.shape,ratio .* obj.shape, mask)
+                            shortWaveFilter(j,k) = 1;
+                        end
+                    end
+                end
+            end
+            
+            out = in .* shortWaveFilter;
+            
+            function out = inRegion(j,k,shape,radii, mask)
+                if mask == "ellipse"
+                    out = any([ ...
+                        inEllipse(j,k,[1,1],radii), ...
+                        inEllipse(j,k,[shape(1),1],radii), ...
+                        inEllipse(j,k,[1,shape(2)],radii), ...
+                        inEllipse(j,k,[shape(1),shape(2)],radii)]);
+                elseif mask == "triangle"
+                    out = any([ ...
+                        inTriangle(j,k,[1,1],radii), ...
+                        inTriangle(j,k,[shape(1),1],radii), ...
+                        inTriangle(j,k,[1,shape(2)],radii), ...
+                        inTriangle(j,k,[shape(1),shape(2)],radii)]);
+                elseif mask == "rectangle"
+                    out = any([ ...
+                        inRectangle(j,k,[1,1],radii), ...
+                        inRectangle(j,k,[shape(1),1],radii), ...
+                        inRectangle(j,k,[1,shape(2)],radii), ...
+                        inRectangle(j,k,[shape(1),shape(2)],radii)]);
+                    
+                end
+            end
+            
+            function out = inEllipse(j,k,centre,radii)
+                out = (j - centre(1)).^2 ./ radii(1).^2 + (k - centre(2)).^2 ./ radii(2).^2 < 1;
+                
+            end
+            
+            function out = inTriangle(j, k, centre, sides)
+                out = abs(j - centre(1)) ./ sides(1) + abs(k - centre(2)) ./ sides(2) < 1;
+            end
+
+            function out = inRectangle(j, k, centre, sides)
+                out = (abs(j - centre(1)) ./ sides(1)) < 1 && (abs(k - centre(2)) ./ sides(2)) < 1;
+            end
         end
     end
 
@@ -96,10 +159,6 @@ classdef PSDomain < Domain
             f = [f; zeros(size(f))];
         end
 
-        function dyhat = suppress(obj, dyhat)
-            dyhat(abs(dyhat)<obj.suppression * max(max(abs(dyhat)))) = 0;
-        end
-        
         function fcell = fftCell(obj, xcell)
             fcell = cellfun(@(x)obj.fftLocal(x), xcell, 'UniformOutput', false);
         end
@@ -131,7 +190,7 @@ classdef PSDomain < Domain
         end
 
         function dyhat = diffLocal(obj, yhat, degree)
-            dyhat = obj.suppress(yhat);
+            dyhat = obj.zeroSmallModes(yhat);
             
             dyhat = obj.reshapeToVector(dyhat);
             
@@ -192,42 +251,6 @@ classdef PSDomain < Domain
             end
         end
 
-        function out = filterOutShortWaves(obj, in, ratioKeptToAll)
-            ratio = ratioKeptToAll/2;
-            if obj.dimension == 1
-                f = ones(obj.shape);
-                f(round(end*ratio+1):round(end-end*ratio)) = 0;
-            elseif obj.dimension == 2
-                f = zeros(obj.shape);
-                for k = 1:obj.shape(2)
-                    for j = 1:obj.shape(1)
-                        if inRegion(j,k,obj.shape,ratio .* obj.shape)
-                            f(j,k) = 1;
-                        end
-                    end
-                end
-            end
-            
-            out = in .* f;
-            
-            function out = inRegion(j,k,shape,radii)
-                out = any([ ...
-                    inEllipse(j,k,[1,1],radii), ...
-                    inEllipse(j,k,[shape(1),1],radii), ...
-                    inEllipse(j,k,[1,shape(2)],radii), ...
-                    inEllipse(j,k,[shape(1),shape(2)],radii)]);
-            end
-            
-            function out = inEllipse(j,k,centre,radii)
-                out = (j - centre(1)).^2 ./ radii(1).^2 + (k - centre(2)).^2 ./ radii(2).^2 < 1;
-                
-            end
-            
-            function out = inTriangle(j, k, centre, sides)
-                out = abs(j - centre(1)) ./ sides(1) + abs(k - centre(2)) ./ sides(2) < 1;
-            end
-        end
-        
         function f = wavenumberMultiplicand(obj, degree)
             if obj.complex
                 m = prod(obj.shape);
