@@ -80,12 +80,12 @@ classdef PSDomain < Domain
 
             ratio = ratioKeptToAll/2;
             if obj.dimension == 1
-                shortWaveFilter = ones(obj.shape);
+                shortWaveFilter = ones(obj.fourierDomain.shape);
                 shortWaveFilter(floor(end*ratio+1):ceil(end-end*ratio)) = 0;
             elseif obj.dimension == 2
-                shortWaveFilter = zeros(obj.shape);
-                for k = 1:obj.shape(2)
-                    for j = 1:obj.shape(1)
+                shortWaveFilter = zeros(obj.fourierDomain.shape);
+                for k = 1:obj.fourierDomain.shape(2)
+                    for j = 1:obj.fourierDomain.shape(1)
                         if inRegion(j,k,obj.shape,ratio .* obj.shape, mask)
                             shortWaveFilter(j,k) = 1;
                         end
