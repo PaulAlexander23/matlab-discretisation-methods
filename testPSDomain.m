@@ -872,19 +872,19 @@ function testFilterOutShortWaves2D(testCase)
     verifyEqual(testCase, actual, expected);
 
     newf = domain.filterOutShortWaves(f,2/3,"rectangle");
-    expected = 6400;
+    expected = 6241;
     actual = numel(find(newf));
 
     verifyEqual(testCase, actual, expected);
 
     newf = domain.filterOutShortWaves(f,2/3,"ellipse");
-    expected = 5172;
+    expected = 5013;
     actual = numel(find(newf));
 
     verifyEqual(testCase, actual, expected);
 
     newf = domain.filterOutShortWaves(f,2/3,"triangle");
-    expected = 3280;
+    expected = 3121;
     actual = numel(find(newf));
 
     verifyEqual(testCase, actual, expected);
@@ -905,19 +905,19 @@ function testFilterOutShortWaves2DReal(testCase)
     verifyEqual(testCase, actual, expected);
 
     newf = domain.filterOutShortWaves(f,2/3,"rectangle");
-    expected = 3200;
+    expected = 3160;
     actual = numel(find(newf));
 
     verifyEqual(testCase, actual, expected);
 
     newf = domain.filterOutShortWaves(f,2/3,"ellipse");
-    expected = 2586;
+    expected = 2546;
     actual = numel(find(newf));
 
     verifyEqual(testCase, actual, expected);
 
     newf = domain.filterOutShortWaves(f,2/3,"triangle");
-    expected = 1640;
+    expected = 1600;
     actual = numel(find(newf));
 
     verifyEqual(testCase, actual, expected);

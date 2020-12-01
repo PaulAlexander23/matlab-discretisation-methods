@@ -96,6 +96,7 @@ classdef PSDomain < Domain
             out = in .* shortWaveFilter;
             
             function out = inRegion(j,k,shape,radii, mask)
+                shape = shape + 1; % centres should be outside by one.
                 if mask == "ellipse"
                     out = any([ ...
                         inEllipse(j,k,[1,1],radii), ...
