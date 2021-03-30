@@ -132,6 +132,27 @@ classdef PSDomain < Domain
                 out = (abs(j - centre(1)) ./ sides(1)) < 1 && (abs(k - centre(2)) ./ sides(2)) < 1;
             end
         end
+
+        function uhatpad = zeropad(obj, uhat, ratio)
+            if obj.dimension == 1
+                uhatpad = obj.zeropad1d(uhat, ratio);
+            elseif obj.dimension == 2
+                uhatpad = permute(obj.zeropad1d(permute(obj.zeropad1d(uhat,ratio),[2,1,3]),ratio,2),[2,1,3]);
+            else
+                error("zeropad not defined for higher dimensions.")
+            end
+
+        end
+
+        function uhat = trunc(obj, uhatpad, ratio)
+            if obj.dimension == 1
+                uhat = obj.trunc1d(uhatpad,ratio);
+            elseif obj.dimension == 2
+                uhat = permute(obj.trunc1d(permute(obj.trunc1d(uhatpad,ratio),[2,1,3]),ratio,2),[2,1,3]);
+            else
+                error("trunc not defined for higher dimensions.")
+            end
+        end
     end
 
     methods(Access = private)
@@ -228,27 +249,6 @@ classdef PSDomain < Domain
             if obj.antialiasing
                 what = obj.trunc(what / ratio.^obj.dimension, ...
                     1/ratio);
-            end
-        end
-
-        function uhatpad = zeropad(obj, uhat, ratio)
-            if obj.dimension == 1
-                uhatpad = obj.zeropad1d(uhat, ratio);
-            elseif obj.dimension == 2
-                uhatpad = permute(obj.zeropad1d(permute(obj.zeropad1d(uhat,ratio),[2,1,3]),ratio,2),[2,1,3]);
-            else
-                error("zeropad not defined for higher dimensions.")
-            end
-
-        end
-
-        function uhat = trunc(obj, uhatpad, ratio)
-            if obj.dimension == 1
-                uhat = obj.trunc1d(uhatpad,ratio);
-            elseif obj.dimension == 2
-                uhat = permute(obj.trunc1d(permute(obj.trunc1d(uhatpad,ratio),[2,1,3]),ratio,2),[2,1,3]);
-            else
-                error("trunc not defined for higher dimensions.")
             end
         end
 

@@ -923,6 +923,126 @@ function testFilterOutShortWaves2DReal(testCase)
     verifyEqual(testCase, actual, expected);
 end
 
+function testZeropad1D(testCase)
+    domain = PSDomain({1:16});
+    f = domain.x{1};
+
+    expected = [f(1:8); zeros(16,1); f(9:16)];
+    actual = domain.zeropad(f,2);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = [f(1:8); zeros(8,1); f(9:16)];
+    actual = domain.zeropad(f,3/2);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testZeropad1DReal(testCase)
+    domain = PSDomain({1:16},true,false);
+    f = domain.x{1}(1:8);
+
+    expected = [f; zeros(8,1)];
+    actual = domain.zeropad(f,2);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = [f; zeros(4,1)];
+    actual = domain.zeropad(f,3/2);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testZeropad2D(testCase)
+    domain = PSDomain({1:16,1:32});
+    f = domain.x{1} + domain.x{2};
+
+    expectedSize = [16,32]*2;
+    actual = domain.zeropad(f,2);
+
+    verifySize(testCase, actual, expectedSize);
+
+    expectedSize = [16,32]*3/2;
+    actual = domain.zeropad(f,3/2);
+
+    verifySize(testCase, actual, expectedSize);
+end
+
+function testZeropad2DReal(testCase)
+    domain = PSDomain({1:16,1:32},true,false);
+    f = domain.x{1}(1:end/2) + domain.x{2}(1:end/2);
+
+    expectedSize = [8,16]*2;
+    actual = domain.zeropad(f,2);
+
+    verifySize(testCase, actual, expectedSize);
+
+    expectedSize = [8,16]*3/2;
+    actual = domain.zeropad(f,3/2);
+
+    verifySize(testCase, actual, expectedSize);
+end
+
+function testTrunc1D(testCase)
+    domain = PSDomain({1:16});
+    f = domain.x{1};
+
+    expected = [f(1:4); 0; f(14:16)];
+    actual = domain.trunc(f,1/2);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = [f(1:6); 0; f(12:16)];
+    actual = domain.trunc(f,3/4);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testTrunc1DReal(testCase)
+    domain = PSDomain({1:16},true,false);
+    f = domain.x{1}(1:8);
+
+    expected = f(1:4);
+    actual = domain.trunc(f,1/2);
+
+    verifyEqual(testCase, actual, expected);
+
+    expected = f(1:6);
+    actual = domain.trunc(f,3/4);
+
+    verifyEqual(testCase, actual, expected);
+end
+
+function testTrunc2D(testCase)
+    domain = PSDomain({1:16,1:32});
+    f = domain.x{1} + domain.x{2};
+
+    expectedSize = [16,32]*2;
+    actual = domain.trunc(f,2);
+
+    verifySize(testCase, actual, expectedSize);
+
+    expectedSize = [16,32]*3/2;
+    actual = domain.trunc(f,3/2);
+
+    verifySize(testCase, actual, expectedSize);
+end
+
+function testTrunc2DReal(testCase)
+    domain = PSDomain({1:16,1:32},true,false);
+    f = domain.x{1}(1:end/2) + domain.x{2}(1:end/2);
+
+    expectedSize = [8,16]/2;
+    actual = domain.trunc(f,1/2);
+
+    verifySize(testCase, actual, expectedSize);
+
+    expectedSize = [8,16]*3/4;
+    actual = domain.trunc(f,3/4);
+
+    verifySize(testCase, actual, expectedSize);
+end
+
 %% Functions
 function x = setup1dX(n)
     x = {linspace(1/n, 1, n)'};
