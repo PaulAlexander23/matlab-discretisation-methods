@@ -22,7 +22,7 @@ classdef PSDomain < Domain
             obj.length = calculateLength(obj);
             obj.suppression = suppression;
             obj.antialiasing = antialiasing;
-            obj.scaling = 2/prod(obj.shape);
+            obj.scaling = 2/prod(obj.shape); %or 1/prod(obj.shape)?
             obj.complex = complex;
             obj.wavenumber = calculateWavenumber(obj);
             obj.fourierDomain = Domain(obj.wavenumber);
