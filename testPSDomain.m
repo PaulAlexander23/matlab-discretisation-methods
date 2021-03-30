@@ -91,8 +91,20 @@ function testScaling1D(testCase)
     n = 2^8;
     domain = PSDomain(setup1dX(n));
     amplitude = 2;
+
+    y = amplitude * ones(n,1);
+    fy = domain.fft(y);
+
+    verifyEqual(testCase, max(real(fy)), amplitude, 'RelTol', eps);
+
     y = amplitude * cos(2 * pi * (domain.x{1} - domain.x{1}(1)));
     fy = domain.fft(y);
+
+    verifyEqual(testCase, max(real(fy)), amplitude, 'RelTol', eps);
+
+    y = amplitude * cos(2 * pi * (n/2)  * (domain.x{1} - domain.x{1}(1)));
+    fy = domain.fft(y);
+
     verifyEqual(testCase, max(real(fy)), amplitude, 'RelTol', eps);
 end
 
@@ -100,6 +112,11 @@ function testScaling2D(testCase)
     n = 2^8;
     domain = PSDomain(setup2dX(n));
     amplitude = 2;
+
+    y = amplitude * ones(n);
+    fy = domain.fft(y);
+    verifyEqual(testCase, max(max(real(fy))), amplitude, 'RelTol', eps);
+
     y = amplitude * cos(2 * pi * (domain.x{1} - domain.x{1}(1) + domain.x{2} - domain.x{2}(1)));
     fy = domain.fft(y);
     verifyEqual(testCase, max(max(real(fy))), amplitude, 'RelTol', eps);
@@ -150,13 +167,15 @@ function testFFT1D(testCase)
     L = 1;
     domain = PSDomain({linspace(L/N,L,N)});
 
-    for m = 1:N/2-1
+    for m = 0:N/2-1
         y = cos(m * 2*pi*(domain.x{1} - domain.x{1}(1)));
 
         actual = domain.fft(y);
         expected = zeros(N, 1);
         expected(m+1) = 1;
-        expected(N-m+1) = 1;
+        if m>0
+            expected(N-m+1) = 1;
+        end
 
         verifyEqual(testCase, actual, expected, 'AbsTol', 1e-13);
     end
@@ -167,7 +186,7 @@ function testFFT1DReal(testCase)
     L = 1;
     domain = PSDomain({linspace(L/N,L,N)}, false, false);
 
-    for m = 1:N/2-1
+    for m = 0:N/2-1
         y = cos(m * 2*pi*(domain.x{1} - domain.x{1}(1)));
 
         actual = domain.fft(y);
@@ -295,7 +314,7 @@ function testIFFT1DReal(testCase)
     L = 1;
     domain = PSDomain({linspace(L/N,L,N)}, false, false);
 
-    for m = 1:N/2-1
+    for m = 0:N/2-1
         y = zeros(N/2, 1);
         y(m+1) = 1;
 

@@ -22,7 +22,7 @@ classdef PSDomain < Domain
             obj.length = calculateLength(obj);
             obj.suppression = suppression;
             obj.antialiasing = antialiasing;
-            obj.scaling = 2/prod(obj.shape); %or 1/prod(obj.shape)?
+            obj.scaling = 2/prod(obj.shape);
             obj.complex = complex;
             obj.wavenumber = calculateWavenumber(obj);
             obj.fourierDomain = Domain(obj.wavenumber);
@@ -187,6 +187,10 @@ classdef PSDomain < Domain
 
         function f = fftLocal(obj, x)
             f = fftn(x) * obj.scaling;
+            f(1) = f(1)/2;
+            if obj.complex
+                f(1+end/2) = f(1+end/2)/2;
+            end
 
             if ~obj.complex
                 f = obj.removeSymmetricConjugate(f);
@@ -198,7 +202,9 @@ classdef PSDomain < Domain
         end
 
         function x = ifftLocal(obj, f)
+            f(1) = f(1)*2;
             if obj.complex
+                f(1+end/2) = f(1+end/2)*2;
                 x = ifftn(f) / obj.scaling;
             else
                 f = obj.addSymmetricConjugate(f);
